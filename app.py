@@ -74,7 +74,22 @@ archivo_usuario = st.sidebar.file_uploader("Sube el archivo CSV de ventas de tu 
 # ==============================================================================
 @st.cache_data
 def limpiar_y_preparar_datos(file_bytes, porcentaje_costo_proveedor, factor_divisa):
-    df_temp = pd.read_csv(io.BytesIO(file_bytes) if isinstance(file_bytes, bytes) else file_bytes)
+    # Detección y lectura segura multi-codificación (UTF-8, Latin-1, CP1252)
+    encodings_a_probar = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+    df_temp = None
+    
+    for enc in encodings_a_probar:
+        try:
+            buffer = io.BytesIO(file_bytes) if isinstance(file_bytes, bytes) else file_bytes
+            df_temp = pd.read_csv(buffer, encoding=enc)
+            break
+        except (UnicodeDecodeError, Exception):
+            continue
+            
+    if df_temp is None:
+        st.error("No se pudo descodificar el archivo CSV. Verifica el formato de texto.")
+        st.stop()
+        
     df_temp = df_temp.dropna(subset=['Order Date', 'Sales'])
     df_temp['Order Date'] = pd.to_datetime(df_temp['Order Date'], format='%d/%m/%Y', errors='coerce')
     df_temp = df_temp[df_temp['Sales'] > 0]
