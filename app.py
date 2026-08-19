@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 # Configuración de alta fidelidad para la página web
 st.set_page_config(page_title="IntelRetail Pro - Sistema de Decisiones", layout="wide", page_icon="📈")
 
-# Estilos CSS personalizados para tarjetas dinámicas basadas en rendimiento financiero
+# SOLUCIÓN AL ERROR: Se cambió unsafe_value por unsafe_allow_html
 st.markdown("""
 <style>
     .metric-container { background-color: #1E1E1E; padding: 20px; border-radius: 10px; border-left: 5px solid #636EFA; margin-bottom: 15px; }
@@ -17,10 +17,10 @@ st.markdown("""
     .metric-value { font-size: 24px; color: #FFFFFF; font-weight: bold; }
     .metric-caption { font-size: 12px; color: #858585; }
 </style>
-""", unsafe_value=True)
+""", unsafe_allow_html=True)
 
 st.title("📈 IntelRetail Pro: Sistema de Inteligencia de Negocios y Simulación")
-st.markdown("Plataforma avanzada de diagnóstico operativo, optimización presupuestal y modelado de escenarios financieros.")
+st.markdown("Plataforma avanzada de diagnóstico operativo, optimización presupuestal y modelado de escenarios financieros [finance].")
 st.markdown("---")
 
 # ==============================================================================
@@ -34,7 +34,7 @@ st.sidebar.markdown("---")
 st.sidebar.header("💱 Configuración de Divisa")
 selector_moneda = st.sidebar.selectbox("Selecciona la moneda de visualización:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
 
-# Definición de factores de conversión y símbolos
+# Definición de factores de conversión y símbolos [finance]
 config_moneda = {
     "COP (Pesos Colombianos)": {"factor": 4000.0, "simbolo": "$", "sufijo": " COP"},
     "USD (Dólares)": {"factor": 1.0, "simbolo": "$", "sufijo": " USD"},
@@ -61,7 +61,7 @@ def limpiar_y_preparar_datos(file, porcentaje_costo_proveedor):
     np.random.seed(42)
     df_temp['Quantity'] = np.random.randint(1, 6, size=len(df_temp))
     
-    # Estructura de costos fijos y variables del comercio
+    # Estructura de costos fijos y variables del comercio [finance]
     factor_costo = porcentaje_costo_proveedor / 100
     df_temp['Costo_Proveedor'] = df_temp['Sales'] * factor_costo
     df_temp['Ganancia_Neta'] = df_temp['Sales'] - df_temp['Costo_Proveedor']
@@ -78,7 +78,7 @@ def analizar_datos_avanzados(df_limpio):
     df_limpio['Dia_Semana'] = df_limpio['Dia_Semana'].map(mapeo_dias)
     dia_dorado = df_limpio.groupby('Dia_Semana')['Sales'].sum().idxmax()
     
-    # Análisis de Ticket Promedio
+    # Análisis de Ticket Promedio [finance]
     ticket_promedio = df_limpio['Sales'].sum() / df_limpio['Quantity'].sum()
     
     # Clientes Top
@@ -99,12 +99,12 @@ def analizar_datos_avanzados(df_limpio):
     }
 
 def optimizar_marketing_avanzado(presupuesto_total):
-    # Umbral de activación realista adaptado a la divisa seleccionada
+    # Umbral de activación realista adaptado a la divisa seleccionada [finance]
     limite_minimo = 20 * m_factor
     if presupuesto_total < limite_minimo:
         return presupuesto_total, 0, 0, 0, int((presupuesto_total * 2.0) / (3 * m_factor)), "FACEBOOK_ONLY"
     
-    # Lógica de distribución dinámica basada en rendimientos decrecientes y diversificación
+    # Lógica de distribución dinámica basada en rendimientos decrecientes y diversificación [finance]
     if presupuesto_total < (200 * m_factor):
         p_ig, p_fb, p_tk, p_gg = 0.40, 0.40, 0.20, 0.0
     else:
@@ -115,7 +115,7 @@ def optimizar_marketing_avanzado(presupuesto_total):
     inv_tk = presupuesto_total * p_tk
     inv_gg = presupuesto_total * p_gg
     
-    # Costos de adquisición indexados al valor de la divisa
+    # Costos de adquisición indexados al valor de la divisa [finance]
     cac = 4 * m_factor
     cl_ig = (inv_ig * 3.5) / cac
     cl_fb = (inv_fb * 3.0) / cac
@@ -128,7 +128,7 @@ def optimizar_marketing_avanzado(presupuesto_total):
 def simular_escenario_negocio(df_original, cambio_precio_porcentaje, presupuesto_marketing, porcentaje_costo_proveedor):
     df_simulado = df_original.copy()
     
-    # Ajuste de precios y análisis elástico de demanda
+    # Ajuste de precios y análisis elástico de demanda [finance]
     factor_precio = 1 + (cambio_precio_porcentaje / 100)
     factor_cantidad = 1 - (cambio_precio_porcentaje / 100 * 0.5) 
     
@@ -139,7 +139,7 @@ def simular_escenario_negocio(df_original, cambio_precio_porcentaje, presupuesto
     ventas_totales_historicas = df_simulado['Sales'].sum()
     ganancia_total_historica = df_simulado['Ganancia_Neta'].sum()
     
-    # Cálculo preciso de ingresos y costos marginales sin desajustes
+    # Cálculo preciso de ingresos y costos marginales sin desajustes [finance]
     ventas_unidades_existentes = (df_simulado['Sales'] * factor_precio * factor_cantidad).sum()
     precio_medio = df_simulado['Sales'].mean() / df_simulado['Quantity'].mean()
     ventas_impulso_marketing = unidades_extra * precio_medio * factor_precio
@@ -179,6 +179,7 @@ analisis = analizar_datos_avanzados(df_app)
 
 # Menú de pestañas optimizado
 pestana_diagnostico, pestana_simulador = st.tabs(["🔍 Diagnóstico Avanzado de Catálogo", "🎛️ Simulador de Escenarios Estratégicos"])
+
 
 # ---- PESTAÑA 1: DIAGNÓSTICO PROFUNDO ----
 with pestana_diagnostico:
