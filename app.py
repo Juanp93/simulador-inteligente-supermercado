@@ -187,6 +187,7 @@ with pestana_diagnostico:
     
     col_a, col_b = st.columns(2)
     with col_a:
+        # SOLUCIÓN DE LÍNEA 190: Se cambió unsafe_value por unsafe_allow_html
         st.markdown(f"""
         <div class="metric-container">
             <div class="metric-title">🏆 PRODUCTO ESTRELLA (MÁXIMA UTILIDAD)</div>
@@ -203,9 +204,10 @@ with pestana_diagnostico:
             <div class="metric-value">{m_simbolo}{analisis['ticket_promedio']:,.2f}{m_sufijo}</div>
             <div class="metric-caption">Monto medio facturado por artículo adquirido [finance].</div>
         </div>
-        """, unsafe_value=True)
+        """, unsafe_allow_html=True)
         
     with col_b:
+        # SOLUCIÓN ADICIONAL: Se cambió unsafe_value por unsafe_allow_html para evitar futuros errores
         st.markdown(f"""
         <div class="metric-container metric-danger">
             <div class="metric-title">💤 ALERTA: PRODUCTO DORMIDO (CERO MOVIMIENTO)</div>
@@ -222,7 +224,7 @@ with pestana_diagnostico:
             <div class="metric-value">Máx: {m_simbolo}{analisis['precio_mas_caro']:,.2f}</div>
             <div class="metric-caption">Mínimo registrado: {m_simbolo}{analisis['precio_mas_barato']:,.2f}{m_sufijo}</div>
         </div>
-        """, unsafe_value=True)
+        """, unsafe_allow_html=True)
         
     st.markdown("---")
     st.subheader("👥 Concentración de Ventas: Top 5 Clientes de Mayor Valor")
