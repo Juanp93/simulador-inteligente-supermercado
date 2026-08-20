@@ -19,89 +19,146 @@ st.markdown("""
     .metric-title { font-size: 13px; color: #A3A3A3; font-weight: bold; text-transform: uppercase; }
     .metric-value { font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
     .metric-caption { font-size: 12px; color: #858585; margin-top: 4px; }
+    .home-card { background-color: #1a1c24; border: 1px solid #2d3139; border-radius: 12px; padding: 25px; margin-bottom: 20px; text-align: center; }
+    .home-card h3 { color: #ffffff; margin-bottom: 10px; font-size: 18px; }
+    .home-card p { color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }
 </style>
 """, unsafe_allow_html=True)
 
-st.title("📈 IntelRetail Pro: Sistema de Inteligencia de Negocios y Simulación")
-st.markdown("Plataforma de diagnóstico operativo, optimización de presupuestos y modelado de escenarios comerciales para retail y microempresas.")
-st.markdown("---")
+# ==============================================================================
+# GESTIÓN DE ESTADO (NAVEGACIÓN MULTIPANTALLA TIPO APP MÓVIL)
+# ==============================================================================
+if "pantalla_actual" not in st.session_state:
+    st.session_state.pantalla_actual = "home"
+
+def cambiar_pantalla(nombre):
+    st.session_state.pantalla_actual = nombre
 
 # ==============================================================================
-# LOCALIZACIÓN Y GESTIÓN DE DIVISAS
+# LOCALIZACIÓN Y GESTIÓN DE DIVISAS DINÁMICA
 # ==============================================================================
-st.sidebar.header("💱 Configuración de Divisa")
-selector_moneda = st.sidebar.selectbox("Selecciona la moneda de visualización:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
+st.sidebar.header("💱 Configuración de Moneda")
+selector_moneda = st.sidebar.selectbox("Divisa de Visualización:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
 
-config_moneda = {
-    "COP (Pesos Colombianos)": {"factor": 4000.0, "simbolo": "$", "sufijo": " COP"},
-    "USD (Dólares)": {"factor": 1.0, "simbolo": "$", "sufijo": " USD"},
-    "MXN (Pesos Mexicanos)": {"factor": 18.5, "simbolo": "$", "sufijo": " MXN"}
-}
-m_factor = config_moneda[selector_moneda]["factor"]
-m_simbolo = config_moneda[selector_moneda]["simbolo"]
-m_sufijo = config_moneda[selector_moneda]["sufijo"]
+if selector_moneda == "COP (Pesos Colombianos)":
+    m_factor = st.sidebar.number_input("Tasa de Cambio (1 USD = X COP):", min_value=100.0, value=4000.0, step=50.0)
+    m_simbolo = "$"
+    m_sufijo = " COP"
+elif selector_moneda == "MXN (Pesos Mexicanos)":
+    m_factor = st.sidebar.number_input("Tasa de Cambio (1 USD = X MXN):", min_value=1.0, value=18.5, step=0.5)
+    m_simbolo = "$"
+    m_sufijo = " MXN"
+else:
+    m_factor = 1.0
+    m_simbolo = "$"
+    m_sufijo = " USD"
 
 # ==============================================================================
-# CARGA DE ARCHIVO Y PLANTILLA CSV
+# GENERADOR DE PLANTILLA EXCEL (.XLSX) PROFESIONAL
 # ==============================================================================
-st.sidebar.markdown("---")
-st.sidebar.header("📁 Carga de Información Financiera")
-
-# Generador de plantilla descargable
 @st.cache_data
-def generar_plantilla_csv():
-    df_plantilla = pd.DataFrame({
-        'Order Date': ['01/10/2026', '02/10/2026', '03/10/2026'],
-        'Product Name': ['Arroz Premium 1kg', 'Aceite Vegetal 900ml', 'Leche Entera 1L'],
-        'Sales': [1.25, 2.50, 1.10],
-        'Quantity': [10, 5, 12],
-        'Customer Name': ['Cliente Mostrador', 'Supermercado Central', 'Tienda Doña Rosa']
-    })
-    return df_plantilla.to_csv(index=False).encode('utf-8')
+def generar_plantilla_excel():
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df_datos = pd.DataFrame({
+            'Fecha': ['01/10/2026', '02/10/2026', '03/10/2026', '04/10/2026', '05/10/2026'],
+            'Producto': ['Arroz Premium 1kg', 'Aceite Vegetal 900ml', 'Leche Entera 1L', 'Jabón Multiusos', 'Café Tostado 500g'],
+            'Ventas': [1.25, 2.50, 1.10, 0.85, 3.20],
+            'Cantidad': [10, 5, 12, 8, 15],
+            'Cliente': ['Cliente Mostrador', 'Supermercado Central', 'Tienda Doña Rosa', 'Panadería San José', 'Cliente Mostrador']
+        })
+        df_datos.to_excel(writer, sheet_name='Datos_Ventas', index=False)
+        
+        df_instrucciones = pd.DataFrame({
+            'Columna': ['Fecha', 'Producto', 'Ventas', 'Cantidad', 'Cliente'],
+            'Formato': ['DD/MM/AAAA (ej. 15/08/2026)', 'Texto libre con nombre del SKU', 'Monto numérico en divisa base (sin símbolos)', 'Número entero de piezas/unidades', 'Nombre del comprador o "Mostrador"'],
+            'Obligatorio': ['Sí', 'Sí', 'Sí', 'Opcional (se autogenera)', 'Opcional']
+        })
+        df_instrucciones.to_excel(writer, sheet_name='Instrucciones', index=False)
+    return output.getvalue()
 
+st.sidebar.markdown("---")
+st.sidebar.header("📁 Ingesta de Datos")
 st.sidebar.download_button(
-    label="📥 Descargar Plantilla CSV Oficial",
-    data=generar_plantilla_csv(),
-    file_name="plantilla_ventas_intelretail.csv",
-    mime="text/csv",
-    help="Descarga este formato, complétalo con las ventas de tu negocio y súbelo aquí."
+    label="📥 Descargar Plantilla Excel Oficial",
+    data=generar_plantilla_excel(),
+    file_name="plantilla_ventas_intelretail.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    help="Descarga este archivo de Excel formateado con instrucciones para cargar tus ventas."
 )
 
-archivo_usuario = st.sidebar.file_uploader("Sube el archivo CSV de ventas de tu negocio:", type=['csv'])
+archivo_usuario = st.sidebar.file_uploader("Sube tu archivo de ventas (.csv o .xlsx):", type=['csv', 'xlsx'])
 
 # ==============================================================================
-# FUNCIONES CORE CON CACHÉ DE RENDIMIENTO
+# MOTOR CORE CON MAPEO TOLERANTE Y CACHÉ
 # ==============================================================================
 @st.cache_data
-def limpiar_y_preparar_datos(file_bytes, porcentaje_costo_proveedor, factor_divisa):
-    # Detección y lectura segura multi-codificación (UTF-8, Latin-1, CP1252)
-    encodings_a_probar = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']
+def limpiar_y_preparar_datos(file_bytes, filename, porcentaje_costo_proveedor, factor_divisa):
     df_temp = None
+    buffer = io.BytesIO(file_bytes) if isinstance(file_bytes, bytes) else file_bytes
     
-    for enc in encodings_a_probar:
+    if filename.endswith('.xlsx'):
         try:
-            buffer = io.BytesIO(file_bytes) if isinstance(file_bytes, bytes) else file_bytes
-            df_temp = pd.read_csv(buffer, encoding=enc)
-            break
-        except (UnicodeDecodeError, Exception):
-            continue
-            
+            df_temp = pd.read_excel(buffer)
+        except Exception as e:
+            st.error(f"Error al leer archivo Excel: {e}")
+            st.stop()
+    else:
+        for enc in ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1']:
+            try:
+                buffer.seek(0)
+                df_temp = pd.read_csv(buffer, encoding=enc)
+                break
+            except:
+                continue
+                
     if df_temp is None:
-        st.error("No se pudo descodificar el archivo CSV. Verifica el formato de texto.")
+        st.error("No fue posible leer el archivo suministrado.")
+        st.stop()
+
+    # Mapeo inteligente tolerante a sinónimos en español e inglés
+    column_map = {}
+    for col in df_temp.columns:
+        col_clean = str(col).strip().lower()
+        if any(x in col_clean for x in ['fecha', 'order date', 'date', 'dia']):
+            column_map[col] = 'Order Date'
+        elif any(x in col_clean for x in ['venta', 'sales', 'ingreso', 'monto', 'total']):
+            column_map[col] = 'Sales'
+        elif any(x in col_clean for x in ['producto', 'product', 'item', 'articulo', 'sku', 'nombre']):
+            column_map[col] = 'Product Name'
+        elif any(x in col_clean for x in ['cantidad', 'quantity', 'unidades', 'cant']):
+            column_map[col] = 'Quantity'
+        elif any(x in col_clean for x in ['cliente', 'customer', 'comprador']):
+            column_map[col] = 'Customer Name'
+            
+    df_temp = df_temp.rename(columns=column_map)
+    
+    if 'Sales' not in df_temp.columns:
+        st.error("⚠️ No se identificó una columna de ventas. Asegúrate de incluir 'Ventas' o 'Sales'.")
         st.stop()
         
-    df_temp = df_temp.dropna(subset=['Order Date', 'Sales'])
-    df_temp['Order Date'] = pd.to_datetime(df_temp['Order Date'], format='%d/%m/%Y', errors='coerce')
+    if 'Product Name' not in df_temp.columns:
+        df_temp['Product Name'] = "Articulo General"
+    if 'Customer Name' not in df_temp.columns:
+        df_temp['Customer Name'] = "Cliente Mostrador"
+        
+    df_temp = df_temp.dropna(subset=['Sales'])
+    df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce')
     df_temp = df_temp[df_temp['Sales'] > 0]
     
-    # Conversión de divisa
+    if 'Order Date' in df_temp.columns:
+        df_temp['Order Date'] = pd.to_datetime(df_temp['Order Date'], format='%d/%m/%Y', errors='coerce')
+    else:
+        df_temp['Order Date'] = pd.Timestamp.now()
+        
     df_temp['Sales_Original'] = df_temp['Sales']
     df_temp['Sales'] = df_temp['Sales_Original'] * factor_divisa
     
-    # Si el CSV no incluye columna Quantity, se genera una estimación
-    if 'Quantity' not in df_temp.columns:
+    if 'Quantity' not in df_temp.columns or df_temp['Quantity'].isnull().all():
         np.random.seed(42)
         df_temp['Quantity'] = np.random.randint(1, 6, size=len(df_temp))
+    else:
+        df_temp['Quantity'] = pd.to_numeric(df_temp['Quantity'], errors='coerce').fillna(1)
         
     factor_costo = porcentaje_costo_proveedor / 100
     df_temp['Costo_Proveedor'] = df_temp['Sales'] * factor_costo
@@ -114,11 +171,19 @@ def analizar_datos_avanzados(df_limpio):
     
     df_limpio['Dia_Semana'] = df_limpio['Order Date'].dt.day_name()
     mapeo_dias = {'Monday': 'Lunes', 'Tuesday': 'Martes', 'Wednesday': 'Miércoles', 'Thursday': 'Jueves', 'Friday': 'Viernes', 'Saturday': 'Sábado', 'Sunday': 'Domingo'}
-    df_limpio['Dia_Semana'] = df_limpio['Dia_Semana'].map(mapeo_dias)
+    df_limpio['Dia_Semana'] = df_limpio['Dia_Semana'].map(mapeo_dias).fillna('Indeterminado')
     dia_dorado = df_limpio.groupby('Dia_Semana')['Sales'].sum().idxmax()
     
     ticket_promedio = df_limpio['Sales'].sum() / len(df_limpio)
     df_clientes = df_limpio.groupby('Customer Name')['Sales'].sum().reset_index().sort_values(by='Sales', ascending=False).head(5)
+    
+    # Análisis de Pareto 80/20
+    df_pareto = df_agrupado.sort_values(by='Sales', ascending=False).copy()
+    df_pareto['Sales_Acum'] = df_pareto['Sales'].cumsum()
+    df_pareto['Pct_Acum'] = (df_pareto['Sales_Acum'] / df_pareto['Sales'].sum()) * 100
+    total_skus = len(df_pareto)
+    skus_pareto = len(df_pareto[df_pareto['Pct_Acum'] <= 80])
+    skus_pareto = max(1, skus_pareto)
     
     return {
         "mas_vendido": df_agrupado.loc[df_agrupado['Quantity'].idxmax()]['Product Name'],
@@ -131,7 +196,10 @@ def analizar_datos_avanzados(df_limpio):
         "precio_mas_barato": df_limpio['Precio_Unitario'].min(),
         "dia_dorado": dia_dorado,
         "ticket_promedio": ticket_promedio,
-        "top_clientes": df_clientes
+        "top_clientes": df_clientes,
+        "df_agrupado": df_agrupado,
+        "total_skus": total_skus,
+        "skus_pareto": skus_pareto
     }
 
 def optimizar_marketing_avanzado(presupuesto_total):
@@ -181,110 +249,181 @@ def simular_escenario_negocio(df_original, cambio_precio_porcentaje, presupuesto
     nuevos_costos_proveedor = costo_unidades_existentes + costo_impulso_marketing
     
     ganancia_total_simulada = ventas_totales_simuladas - nuevos_costos_proveedor - presupuesto_marketing
-    
     return ventas_totales_historicas, ganancia_total_historica, ventas_totales_simuladas, ganancia_total_simulada
 
 # ==============================================================================
-# CARGA DEL DATASET
+# CARGA DE DATOS CENTRALIZADA
 # ==============================================================================
-with st.sidebar.expander("⚙️ Configuración de Costos (CSV)", expanded=True):
-    slider_costo_prov = st.slider("Costo del Proveedor (%)", min_value=10, max_value=90, value=70, step=5)
+with st.sidebar.expander("⚙️ Parámetros de Costo de Compra", expanded=True):
+    slider_costo_prov = st.slider("Costo de Adquisición / Proveedor (%)", min_value=10, max_value=90, value=70, step=5)
 
 if archivo_usuario is not None:
-    df_app = limpiar_y_preparar_datos(archivo_usuario.getvalue(), slider_costo_prov, m_factor)
-    st.sidebar.success("¡Datos empresariales procesados con éxito!")
+    df_app = limpiar_y_preparar_datos(archivo_usuario.getvalue(), archivo_usuario.name, slider_costo_prov, m_factor)
+    st.sidebar.success("¡Datos empresariales cargados con éxito!")
 else:
     try:
         with open('train.csv', 'rb') as f:
-            df_app = limpiar_y_preparar_datos(f.read(), slider_costo_prov, m_factor)
-        st.sidebar.info("Utilizando registros maestros de demostración.")
+            df_app = limpiar_y_preparar_datos(f.read(), 'train.csv', slider_costo_prov, m_factor)
+        st.sidebar.info("Modo demostración con datos base.")
     except:
-        st.error("Error: Falta el archivo base 'train.csv'. Por favor sube un archivo CSV.")
-        st.stop()
+        df_app = pd.DataFrame()
 
-analisis = analizar_datos_avanzados(df_app)
+if not df_app.empty:
+    analisis = analizar_datos_avanzados(df_app)
+
+# Menú lateral de navegación rápida
+st.sidebar.markdown("---")
+st.sidebar.header("🧭 Navegación")
+opcion_nav = st.sidebar.radio(
+    "Ir a:", 
+    ["🏠 Inicio (Home)", "⚡ Diagnóstico Express (Sin CSV)", "🔍 Auditoría y BI de Catálogo", "🎛️ Simulador y Proyecciones", "🎯 Planificador por Objetivos"],
+    index=0 if st.session_state.pantalla_actual == "home" else 
+          1 if st.session_state.pantalla_actual == "express" else
+          2 if st.session_state.pantalla_actual == "diagnostico" else
+          3 if st.session_state.pantalla_actual == "simulador" else 4
+)
+
+if opcion_nav == "🏠 Inicio (Home)":
+    st.session_state.pantalla_actual = "home"
+elif opcion_nav == "⚡ Diagnóstico Express (Sin CSV)":
+    st.session_state.pantalla_actual = "express"
+elif opcion_nav == "🔍 Auditoría y BI de Catálogo":
+    st.session_state.pantalla_actual = "diagnostico"
+elif opcion_nav == "🎛️ Simulador y Proyecciones":
+    st.session_state.pantalla_actual = "simulador"
+elif opcion_nav == "🎯 Planificador por Objetivos":
+    st.session_state.pantalla_actual = "objetivos"
 
 # ==============================================================================
-# PESTAÑAS DE LA APLICACIÓN
+# PANTALLA 1: HOME PAGE (ESTILO APP MÓVIL)
 # ==============================================================================
-pestana_express, pestana_diagnostico, pestana_simulador = st.tabs([
-    "⚡ Diagnóstico Express (Sin CSV)",
-    "🔍 Diagnóstico Avanzado de Catálogo",
-    "🎛️ Simulador de Escenarios Estratégicos"
-])
+if st.session_state.pantalla_actual == "home":
+    st.title("🚀 Bienvenido a IntelRetail Pro")
+    st.markdown("#### *El copiloto estratégico de inteligencia de negocios y finanzas para microempresarios y retail.*")
+    st.markdown("Selecciona el módulo con el que deseas trabajar hoy:")
+    st.write("")
 
-# ---- PESTAÑA 1: DIAGNÓSTICO EXPRESS (PARA MICRO-NEGOCIOS) ----
-with pestana_express:
+    col_h1, col_h2 = st.columns(2)
+    with col_h1:
+        st.markdown("""
+        <div class="home-card">
+            <h3>⚡ Diagnóstico Express</h3>
+            <p>Ideal si no tienes un archivo de ventas. Ingresa tus números estimados y obtén tu punto de equilibrio y salud de márgenes al instante.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Abrir Diagnóstico Express ➡️", use_container_width=True, type="primary"):
+            cambiar_pantalla("express")
+            st.rerun()
+
+        st.write("")
+        st.markdown("""
+        <div class="home-card">
+            <h3>🎛️ Simulador de Escenarios</h3>
+            <p>Proyecta cómo afectará tus utilidades subir o bajar precios y simula la inversión publicitaria en redes sociales.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Abrir Simulador Financiero ➡️", use_container_width=True):
+            cambiar_pantalla("simulador")
+            st.rerun()
+
+    with col_h2:
+        st.markdown("""
+        <div class="home-card">
+            <h3>🔍 Auditoría y BI de Catálogo</h3>
+            <p>Carga tu historial de ventas para descubrir tus productos estrella, dormidos, regla de Pareto 80/20 y matriz BCG.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Abrir Auditoría de Catálogo ➡️", use_container_width=True):
+            cambiar_pantalla("diagnostico")
+            st.rerun()
+
+        st.write("")
+        st.markdown("""
+        <div class="home-card">
+            <h3>🎯 Planificador de Metas (Simulador Inverso)</h3>
+            <p>Define cuánto dinero neto quieres ganar este mes y calcula exactamente cuántas ventas diarias necesitas alcanzar.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.button("Abrir Planificador de Metas ➡️", use_container_width=True):
+            cambiar_pantalla("objetivos")
+            st.rerun()
+
+# ==============================================================================
+# PANTALLA 2: DIAGNÓSTICO EXPRESS (PARA MICRO-NEGOCIOS)
+# ==============================================================================
+elif st.session_state.pantalla_actual == "express":
+    if st.button("⬅️ Volver al Inicio"):
+        cambiar_pantalla("home")
+        st.rerun()
+        
     st.header("⚡ Diagnóstico Rápido para Micro-Comercios")
-    st.markdown("¿No tienes un historial masivo de ventas? Ingresa las métricas estimadas de tu negocio para obtener un análisis financiero instantáneo.")
+    st.markdown("Diseñado para comerciantes sin data histórica masiva. Completa los 4 datos básicos:")
     
     col_e1, col_e2 = st.columns(2)
     with col_e1:
         venta_mensual_est = st.number_input(f"Venta estimada promedio al mes ({m_sufijo}):", min_value=100.0, value=5000000.0 if selector_moneda == "COP (Pesos Colombianos)" else 2000.0, step=50000.0 if selector_moneda == "COP (Pesos Colombianos)" else 100.0)
-        margen_bruto_pct = st.slider("Margen bruto sobre productos (% de ganancia estimada):", min_value=5, max_value=80, value=30, step=1)
+        margen_bruto_pct = st.slider("Margen bruto sobre productos (% de ganancia sobre costo):", min_value=5, max_value=80, value=30, step=1)
     
     with col_e2:
         gastos_fijos_est = st.number_input(f"Gastos fijos mensuales (Arriendo, nómina, servicios en {m_sufijo}):", min_value=0.0, value=1200000.0 if selector_moneda == "COP (Pesos Colombianos)" else 500.0, step=50000.0 if selector_moneda == "COP (Pesos Colombianos)" else 50.0)
-        clientes_mes_est = st.number_input("Número estimado de transacciones / clientes atendidos al mes:", min_value=1, value=350, step=10)
+        clientes_mes_est = st.number_input("Número estimado de clientes/compras al mes:", min_value=1, value=350, step=10)
 
-    # Cálculos Financieros Express
     utilidad_bruta_est = venta_mensual_est * (margen_bruto_pct / 100)
     utilidad_neta_est = utilidad_bruta_est - gastos_fijos_est
     ticket_prom_express = venta_mensual_est / clientes_mes_est
     
-    # Punto de Equilibrio (Break-Even)
     punto_equilibrio_ventas = gastos_fijos_est / (margen_bruto_pct / 100) if margen_bruto_pct > 0 else 0
     clientes_punto_equilibrio = int(punto_equilibrio_ventas / ticket_prom_express) if ticket_prom_express > 0 else 0
     
     st.markdown("---")
-    st.subheader("📌 Resultados del Diagnóstico Operativo")
-    
+    st.subheader("📌 Diagnóstico Financiero Instantáneo")
     col_r1, col_r2, col_r3 = st.columns(3)
     with col_r1:
         st.markdown(f"""
         <div class="metric-container {'metric-success' if utilidad_neta_est > 0 else 'metric-danger'}">
             <div class="metric-title">💼 UTILIDAD NETA MENSUAL ESTIMADA</div>
             <div class="metric-value">{m_simbolo}{utilidad_neta_est:,.2f}{m_sufijo}</div>
-            <div class="metric-caption">Rendimiento después de cubrir costos y gastos fijos.</div>
+            <div class="metric-caption">Ganancia real descontando gastos operativos y costo de compra.</div>
         </div>
         """, unsafe_allow_html=True)
-        
     with col_r2:
         st.markdown(f"""
         <div class="metric-container metric-warning">
-            <div class="metric-title">⚖️ PUNTO DE EQUILIBRIO FINANCIERO</div>
+            <div class="metric-title">⚖️ PUNTO DE EQUILIBRIO MENSUAL</div>
             <div class="metric-value">{m_simbolo}{punto_equilibrio_ventas:,.2f}{m_sufijo}</div>
-            <div class="metric-caption">Ventas mínimas requeridas para no operar en pérdidas.</div>
+            <div class="metric-caption">Venta mínima para cubrir gastos sin entrar a pérdidas.</div>
         </div>
         """, unsafe_allow_html=True)
-        
     with col_r3:
         st.markdown(f"""
         <div class="metric-container">
-            <div class="metric-title">🛒 TICKET PROMEDIO / TRANSACCIÓN</div>
+            <div class="metric-title">🛒 TICKET PROMEDIO REQUERIDO</div>
             <div class="metric-value">{m_simbolo}{ticket_prom_express:,.2f}{m_sufijo}</div>
-            <div class="metric-caption">Equivale a unos <b>{clientes_punto_equilibrio} clientes mínimos/mes</b> para el punto de equilibrio.</div>
+            <div class="metric-caption">Necesitas atender al menos <b>{clientes_punto_equilibrio} clientes/mes</b>.</div>
         </div>
         """, unsafe_allow_html=True)
 
-    # Recomendación Táctica para el Micro-Comercio
-    st.markdown("### 💡 Plan de Acción Inmediato")
-    if utilidad_neta_est < 0:
-        st.error(f"⚠️ **Atención:** Actualmente estás por debajo de tu punto de equilibrio por **{m_simbolo}{abs(utilidad_neta_est):,.2f}{m_sufijo}**. Necesitas incrementar tus ventas mensuales en al menos {m_simbolo}{punto_equilibrio_ventas - venta_mensual_est:,.2f} o renegociar costos fijos.")
-    else:
-        st.success(f"✅ **Operación Saludable:** Tu negocio genera utilidades y supera el punto de equilibrio por **{m_simbolo}{venta_mensual_est - punto_equilibrio_ventas:,.2f}{m_sufijo}** al mes.")
-
-    with st.expander("🚀 Estrategias Clave para Aumentar el Ticket Promedio sin Gastar en Publicidad", expanded=True):
+    with st.expander("💡 Recomendaciones Prácticas para Mejorar tu Margen Hoy", expanded=True):
         st.markdown("""
-        * **Combos de Necesidad Inmediata (Cross-Selling):** Agrupa productos complementarios que el cliente suele olvidar (ej. arroz + aceite, o bebidas + pasabocas) con un descuento simbólico del 5%.
-        * **Anclaje de Precios en Mostrador:** Coloca cerca de la caja artículos de bajo valor y alta rotación para compras de último momento por impulso.
-        * **Fidelización por Recurrencia:** Ofrece una tarjeta física de sellos (ej. 'En tu décima compra, recibe un 10% de descuento') para incentivar visitas semanales.
+        * **Estrategia de Anclaje:** Sitúa los artículos de compra por impulso cerca de la zona de cobro.
+        * **Ofertas Empaquetadas (Bundles):** Combina el producto más vendido con uno de baja rotación pero alto margen.
+        * **Revisión de Fugas de Caja:** Revisa periódicamente si las mermas o gastos hormiga superan el 3% de las ventas.
         """)
 
-# ---- PESTAÑA 2: DIAGNÓSTICO AVANZADO DE CATÁLOGO ----
-with pestana_diagnostico:
-    st.header("📊 Diagnóstico de Salud Comercial")
+# ==============================================================================
+# PANTALLA 3: AUDITORÍA Y BI DE CATÁLOGO (PARETO + BCG + CLIENTES TOP)
+# ==============================================================================
+elif st.session_state.pantalla_actual == "diagnostico":
+    if st.button("⬅️ Volver al Inicio"):
+        cambiar_pantalla("home")
+        st.rerun()
+        
+    st.header("📊 Diagnóstico Avanzado de Catálogo y BI")
     
+    if df_app.empty:
+        st.warning("Carga un archivo de ventas en la barra lateral para ver este reporte.")
+        st.stop()
+        
     col_a, col_b = st.columns(2)
     with col_a:
         st.markdown(f"""
@@ -299,31 +438,42 @@ with pestana_diagnostico:
             <div class="metric-caption"><b>SKU / Nombre:</b> {analisis['mas_vendido']}</div>
         </div>
         <div class="metric-container">
-            <div class="metric-title">🛒 TICKET PROMEDIO POR TRANSACCIÓN</div>
+            <div class="metric-title">🛒 TICKET PROMEDIO POR ORDEN</div>
             <div class="metric-value">{m_simbolo}{analisis['ticket_promedio']:,.2f}{m_sufijo}</div>
-            <div class="metric-caption">Monto medio facturado por cada orden de compra.</div>
+            <div class="metric-caption">Facturación promedio por transacción en base de datos.</div>
         </div>
         """, unsafe_allow_html=True)
         
     with col_b:
         st.markdown(f"""
         <div class="metric-container metric-danger">
-            <div class="metric-title">💤 ALERTA: PRODUCTO DORMIDO (BAJA ROTACIÓN)</div>
+            <div class="metric-title">💤 PRODUCTO DORMIDO (BAJA ROTACIÓN)</div>
             <div class="metric-value">{analisis['cant_menos_vendido']} {'Unidad' if analisis['cant_menos_vendido'] == 1 else 'Unidades'}</div>
-            <div class="metric-caption"><b>SKU / Nombre:</b> {analisis['menos_vendido']}<br><span style='color:#FF6B6B;'>Riesgo de dinero inmovilizado en inventario.</span></div>
+            <div class="metric-caption"><b>SKU / Nombre:</b> {analisis['menos_vendido']} (Riesgo de inventario estancado).</div>
         </div>
         <div class="metric-container">
             <div class="metric-title">🗓️ DÍA DORADO DE FACTURACIÓN</div>
             <div class="metric-value">Cada {analisis['dia_dorado']}</div>
-            <div class="metric-caption">Día de la semana con mayor concentración de ventas.</div>
+            <div class="metric-caption">Día con mayor concentración de ingresos semanales.</div>
         </div>
         <div class="metric-container">
-            <div class="metric-title">💰 RANGO DE PRECIOS EN CATÁLOGO</div>
-            <div class="metric-value">Máx: {m_simbolo}{analisis['precio_mas_caro']:,.2f}</div>
-            <div class="metric-caption">Mínimo registrado: {m_simbolo}{analisis['precio_mas_barato']:,.2f}{m_sufijo}</div>
+            <div class="metric-title">📐 ANÁLISIS DE PARETO (80/20)</div>
+            <div class="metric-value">{analisis['skus_pareto']} de {analisis['total_skus']} Productos</div>
+            <div class="metric-caption">Solo el {(analisis['skus_pareto']/analisis['total_skus'])*100:.1f}% de tus SKUs genera el 80% de tus ventas.</div>
         </div>
         """, unsafe_allow_html=True)
-        
+
+    st.markdown("---")
+    st.subheader("🎯 Matriz de Inventario BCG (Rotación vs. Margen)")
+    fig_bcg = px.scatter(
+        analisis['df_agrupado'], x='Quantity', y='Ganancia_Neta',
+        size='Sales', color='Product Name', hover_name='Product Name',
+        labels={'Quantity': 'Unidades Vendidas (Rotación)', 'Ganancia_Neta': f'Ganancia Acumulada ({m_sufijo})'},
+        title="Posición Estratégica de Productos en Catálogo"
+    )
+    fig_bcg.update_layout(showlegend=False, height=400)
+    st.plotly_chart(fig_bcg, use_container_width=True)
+
     st.markdown("---")
     st.subheader("👥 Concentración de Ventas: Top 5 Clientes de Mayor Valor")
     fig_cl = px.bar(
@@ -331,32 +481,41 @@ with pestana_diagnostico:
         labels={'Sales': f'Total Facturado ({m_sufijo})', 'Customer Name': 'Cliente'},
         color='Sales', color_continuous_scale='Blues'
     )
-    fig_cl.update_layout(height=320, showlegend=False, yaxis=dict(autorange="reversed"))
+    fig_cl.update_layout(height=300, showlegend=False, yaxis=dict(autorange="reversed"))
     st.plotly_chart(fig_cl, use_container_width=True)
 
-# ---- PESTAÑA 3: SIMULADOR DE ESCENARIOS ----
-with pestana_simulador:
-    st.header("🎛️ Modelado Financiero Predictivo")
+# ==============================================================================
+# PANTALLA 4: SIMULADOR DE ESCENARIOS Y ASIGNACIÓN DE MARKETING
+# ==============================================================================
+elif st.session_state.pantalla_actual == "simulador":
+    if st.button("⬅️ Volver al Inicio"):
+        cambiar_pantalla("home")
+        st.rerun()
+        
+    st.header("🎛️ Modelado Financiero Predictivo y Pauta Digital")
     
-    with st.sidebar.expander("🎯 Palanca de Decisiones (Simulador)", expanded=True):
-        slider_precio = st.slider("Ajuste de Precios (%)", min_value=-20, max_value=20, value=0, step=1)
+    if df_app.empty:
+        st.warning("Carga un archivo de ventas en la barra lateral para simular escenarios.")
+        st.stop()
+        
+    col_s1, col_s2 = st.columns(2)
+    with col_s1:
+        slider_precio = st.slider("Ajuste Estratégico de Precios (%)", min_value=-20, max_value=20, value=0, step=1)
+    with col_s2:
         max_p_mkt = 5000000 if selector_moneda == "COP (Pesos Colombianos)" else 2000
         step_p_mkt = 100000 if selector_moneda == "COP (Pesos Colombianos)" else 50
-        slider_mkt = st.slider("Presupuesto Publicitario", min_value=0, max_value=max_p_mkt, value=0, step=step_p_mkt)
+        slider_mkt = st.slider("Presupuesto Publicitario Mensual", min_value=0, max_value=max_p_mkt, value=0, step=step_p_mkt)
 
     v_h, g_h, v_s, g_s = simular_escenario_negocio(df_app, slider_precio, slider_mkt, slider_costo_prov)
     ig_i, fb_i, tk_i, gg_i, cl_n, modo_mkt = optimizar_marketing_avanzado(slider_mkt)
     
     if g_s > g_h:
-        st.success(f"🟢 **Escenario Favorable:** Las proyecciones estiman un incremento en las ganancias netas del **{((g_s - g_h)/g_h)*100:.2f}%**.")
+        st.success(f"🟢 **Escenario Favorable:** Las proyecciones estiman un incremento en ganancias del **{((g_s - g_h)/g_h)*100:.2f}%**.")
     elif g_s < 0:
-        st.error("🔴 **Alerta Crítica de Pérdidas:** La estrategia planteada destruye el margen comercial. Estás operando por debajo de tu punto de equilibrio financiero.")
+        st.error("🔴 **Alerta de Pérdidas:** La estrategia destruye el margen comercial; operarás por debajo del punto de equilibrio.")
     else:
-        st.warning(f"🟡 **Escenario de Riesgo Moderado:** Las utilidades proyectadas disminuyen un **{abs(((g_s - g_h)/g_h)*100):.2f}%** frente al histórico básico.")
+        st.warning(f"🟡 **Riesgo Moderado:** Las utilidades proyectadas disminuyen un **{abs(((g_s - g_h)/g_h)*100):.2f}%**.")
         
-    st.subheader("📊 Proyección del Impacto Financiero Global")
-    
-    # Gráfico agrupado corregido
     fig_fin = go.Figure(data=[
         go.Bar(name='Histórico (Pasado)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_h, g_h], marker_color='#636EFA'),
         go.Bar(name='Simulado (Futuro Proyectado)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_s, g_s], marker_color='#00CC96')
@@ -367,45 +526,65 @@ with pestana_simulador:
     
     if slider_mkt > 0:
         st.markdown("---")
-        st.subheader("📢 Recomendación de Asignación Presupuestal")
-        
+        st.subheader("📢 Distribución de Presupuesto en Canales Digitales")
         if modo_mkt == "FACEBOOK_ONLY":
-            st.warning(f"⚠️ **Presupuesto Inicial Concentrado:** El capital ingresado rinde mejor concentrando el 100% de la pauta en **Facebook Ads** local.")
-            st.info(f"🎯 **Tracción Estimada:** Captación proyectada de **{cl_n} clientes nuevos** en el período.")
-            
-            with st.expander("💡 Ideas de Contenido Recomendadas para Facebook (Comercio Local)", expanded=True):
-                st.markdown(f"""
-                * **Post de Tracción Local (Promoción Vecinal):** *"¿Planeando las compras del hogar? 🛒 En tu tienda aliada de barrio tenemos promociones especiales esta semana. ¡Te esperamos!"*
-                * **Estrategia de Video Corto:** Graba un video de 15 segundos mostrando la llegada de productos frescos los días **{analisis['dia_dorado']}**, destacando variedad y precios justos.
-                * **Llamado a la Acción (CTA):** *"Haz clic en el botón para hacer tu pedido directo por WhatsApp con entrega rápida."*
-                """)
+            st.info(f"🎯 Captación estimada de **{cl_n} clientes nuevos** concentrando el 100% en Facebook Ads local.")
         else:
-            st.info(f"🎯 **Optimización Diversificada:** Asignación multimedios equilibrada. Captación estimada de **{cl_n} compradores nuevos**.")
-            
-            datos_mkt = {
-                'Red Social': ['Instagram', 'Facebook', 'TikTok', 'Google Ads'],
-                'Inversión Sugerida': [ig_i, fb_i, tk_i, gg_i]
-            }
+            datos_mkt = {'Red Social': ['Instagram', 'Facebook', 'TikTok', 'Google Ads'], 'Inversión': [ig_i, fb_i, tk_i, gg_i]}
             fig_mkt = px.bar(
-                datos_mkt, x='Red Social', y='Inversión Sugerida', text='Inversión Sugerida',
-                color='Red Social',
+                datos_mkt, x='Red Social', y='Inversión', text='Inversión', color='Red Social',
                 color_discrete_map={'Instagram': '#E1306C', 'Facebook': '#1877F2', 'TikTok': '#25F4EE', 'Google Ads': '#4285F4'}
             )
             fig_mkt.update_traces(texttemplate=m_simbolo + '%{text:,.2f}' + m_sufijo, textposition='outside')
             fig_mkt.update_layout(showlegend=False, height=350)
             st.plotly_chart(fig_mkt, use_container_width=True)
-            
-            with st.expander("💡 Consultoría Estratégica de Contenido Multiplataforma", expanded=True):
-                col_c1, col_c2 = st.columns(2)
-                with col_c1:
-                    st.markdown(f"""
-                    **📸 Estrategia para Instagram (Canal Visual):**
-                    * **Idea de Contenido:** Publica carruseles con fotos claras mostrando 'Combos de despensa express'.
-                    * **Gancho Visual:** Aprovecha tu producto líder en rotación (**{analisis['mas_vendido']}**) para diseñar promociones cruzadas.
-                    """)
-                with col_c2:
-                    st.markdown(f"""
-                    **🎵 Estrategia para TikTok (Canal de Alcance Local):**
-                    * **Idea de Video:** Muestra el detrás de escena del negocio preparando los pedidos más populares de la semana.
-                    * **Enfoque de Audio:** Usa audios en tendencia y etiqueta tu ciudad/barrio para atraer clientes del sector.
-                    """)
+
+# ==============================================================================
+# PANTALLA 5: PLANIFICADOR DE METAS (SIMULADOR INVERSO)
+# ==============================================================================
+elif st.session_state.pantalla_actual == "objetivos":
+    if st.button("⬅️ Volver al Inicio"):
+        cambiar_pantalla("home")
+        st.rerun()
+        
+    st.header("🎯 Planificador por Objetivos (Simulador Inverso)")
+    st.markdown("Define tu meta financiera mensual y descubre qué esfuerzo operativo requiere tu comercio:")
+    
+    meta_ganancia = st.number_input(f"¿Cuánto dinero neto deseas ganar este mes? ({m_sufijo}):", min_value=1000.0, value=3000000.0 if selector_moneda == "COP (Pesos Colombianos)" else 1500.0, step=100000.0 if selector_moneda == "COP (Pesos Colombianos)" else 50.0)
+    gastos_fijos_plan = st.number_input(f"Gastos fijos a cubrir en el período ({m_sufijo}):", min_value=0.0, value=1500000.0 if selector_moneda == "COP (Pesos Colombianos)" else 600.0, step=50000.0 if selector_moneda == "COP (Pesos Colombianos)" else 50.0)
+    
+    margen_comercial = (100 - slider_costo_prov) / 100
+    ventas_necesarias = (meta_ganancia + gastos_fijos_plan) / margen_comercial if margen_comercial > 0 else 0
+    ventas_diarias_req = ventas_necesarias / 30
+    
+    t_prom = analisis['ticket_promedio'] if not df_app.empty else (ventas_necesarias / 300)
+    transacciones_diarias_req = int(np.ceil(ventas_diarias_req / t_prom)) if t_prom > 0 else 0
+    
+    st.markdown("---")
+    st.subheader("📋 Hoja de Ruta para Alcanzar tu Meta")
+    
+    col_p1, col_p2, col_p3 = st.columns(3)
+    with col_p1:
+        st.markdown(f"""
+        <div class="metric-container metric-success">
+            <div class="metric-title">🎯 FACTURACIÓN TOTAL REQUERIDA</div>
+            <div class="metric-value">{m_simbolo}{ventas_necesarias:,.2f}{m_sufijo}</div>
+            <div class="metric-caption">Ventas brutas mensuales necesarias.</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_p2:
+        st.markdown(f"""
+        <div class="metric-container">
+            <div class="metric-title">📅 META DE VENTA DIARIA</div>
+            <div class="metric-value">{m_simbolo}{ventas_diarias_req:,.2f}{m_sufijo}</div>
+            <div class="metric-caption">Objetivo diario promedio (30 días).</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col_p3:
+        st.markdown(f"""
+        <div class="metric-container metric-warning">
+            <div class="metric-title">👥 CLIENTES / TICKETS DIARIOS</div>
+            <div class="metric-value">{transacciones_diarias_req} Compras/Día</div>
+            <div class="metric-caption">Basado en tu ticket promedio actual.</div>
+        </div>
+        """, unsafe_allow_html=True)
