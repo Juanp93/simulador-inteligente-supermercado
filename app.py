@@ -57,7 +57,7 @@ with st.sidebar:
     if st.button("🏠 Inicio", use_container_width=True): cambiar_pantalla("home")
     if st.button("⚡ Diagnóstico Express", use_container_width=True): cambiar_pantalla("express")
     if st.button("🔍 Auditoría de Catálogo", use_container_width=True): cambiar_pantalla("diagnostico")
-    if st.button("🎛️ Simulador y Pauta", use_container_width=True): cambiar_pantalla("simulador")
+    if st.button("🎛️ Simulador y Marketing IA", use_container_width=True): cambiar_pantalla("simulador")
     if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
     
     st.markdown("---")
@@ -68,7 +68,6 @@ with st.sidebar:
 
     st.markdown("---")
     st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
-    costo_base = st.slider("Costo Global Base (%)", 10, 90, 70, 5)
     archivo = st.file_uploader("📁 Sube tus ventas:", type=['csv', 'xlsx'])
     
     if archivo:
@@ -137,7 +136,8 @@ if not st.session_state.df_bruto.empty:
         
         productos_unicos = df_temp['Product Name'].unique()
         if st.session_state.costos_editados.empty or len(st.session_state.costos_editados) != len(productos_unicos):
-            st.session_state.costos_editados = pd.DataFrame({'Product Name': productos_unicos, 'Costo (%)': [float(costo_base)]*len(productos_unicos)})
+            # Inicia con un 70% por defecto general
+            st.session_state.costos_editados = pd.DataFrame({'Product Name': productos_unicos, 'Costo (%)': [70.0]*len(productos_unicos)})
         
         df_final = pd.merge(df_temp, st.session_state.costos_editados, on='Product Name', how='left')
         df_final['Costo_Valor'] = df_final['Sales'] * (df_final['Costo (%)'] / 100)
@@ -154,12 +154,12 @@ if st.session_state.pantalla_actual == "home":
     with c1:
         st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu rentabilidad separando servicios, productos y gastos a 8 semanas.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Diagnóstico", use_container_width=True, type="primary"): cambiar_pantalla("express"); st.rerun()
-        st.markdown('<div class="home-card"><h3>🎛️ Simulador e IA</h3><p>Proyecta presupuestos de pauta realistas con la ayuda de tu IA.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🎛️ Simulador y Marketing IA</h3><p>Proyecta pauta realista y genera campañas automáticas con IA.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Simulador", use_container_width=True): cambiar_pantalla("simulador"); st.rerun()
     with c2:
-        st.markdown('<div class="home-card"><h3>🔍 Auditoría de Catálogo</h3><p>Métricas humanas y claras sobre la salud de tus productos y servicios.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🔍 Auditoría de Catálogo</h3><p>Métricas claras sobre la salud de tus productos con ajuste de costos global.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Auditoría", use_container_width=True): cambiar_pantalla("diagnostico"); st.rerun()
-        st.markdown('<div class="home-card"><h3>🎯 Planificador Estratégico</h3><p>Proyecta incrementos de tarifas, meses pico y tu capacidad operativa tope.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🎯 Planificador Estratégico</h3><p>Proyecta tarifas, meses pico y tu capacidad operativa tope.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Planificador", use_container_width=True): cambiar_pantalla("objetivos"); st.rerun()
 
 elif st.session_state.pantalla_actual == "express":
@@ -209,8 +209,35 @@ elif st.session_state.pantalla_actual == "diagnostico":
     if df_final.empty: 
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda para comenzar.")
     else:
-        st.subheader("⚙️ 1. Ajuste de Costos Individuales")
-        st.session_state.costos_editados = st.data_editor(st.session_state.costos_editados, hide_index=True, use_container_width=True)
+        st.subheader("⚙️ 1. Ajuste de Costos")
+        
+        # SLIDER GLOBAL INTELIGENTE
+        c_sl, c_btn = st.columns([3, 1])
+        with c_sl:
+            nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0, help="Usa este slider y presiona 'Aplicar' para reescribir toda la tabla de abajo. Luego podrás editar las excepciones de forma manual.")
+        with c_btn:
+            st.write("") # Espaciador para alinear el botón
+            st.write("")
+            if st.button("Aplicar a todos", use_container_width=True, type="primary"):
+                st.session_state.costos_editados['Costo (%)'] = float(nuevo_costo_global)
+                st.rerun()
+
+        st.markdown("Edita individualmente usando las celdas de la tabla (Soporta navegación con teclado y Control+V):")
+        # FORMATO ESTRICTO NUMÉRICO PARA LA TABLA (Mejora el uso de ENTER)
+        st.session_state.costos_editados = st.data_editor(
+            st.session_state.costos_editados, 
+            hide_index=True, 
+            use_container_width=True,
+            column_config={
+                "Costo (%)": st.column_config.NumberColumn(
+                    "Costo (%)",
+                    min_value=0.0,
+                    max_value=100.0,
+                    step=1.0,
+                    format="%.1f %%"
+                )
+            }
+        )
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final)
@@ -236,18 +263,18 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
 elif st.session_state.pantalla_actual == "simulador":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
-    st.header("🎛️ Simulador Financiero y Pauta")
+    st.header("🎛️ Simulador Financiero y Marketing IA")
     
     if df_final.empty: 
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda.")
     else:
-        st.markdown("### Ajusta tus palancas comerciales:")
+        st.markdown("### 1. Palancas Comerciales:")
         c1, c2 = st.columns(2)
-        precio = c1.slider("1. Ajuste General de Precios (%)", -50, 50, 0)
+        precio = c1.slider("Ajuste General de Precios (%)", -50, 50, 0)
         
         val_inicial = int(25 * m_factor) 
         step_val = int(5 * m_factor)     
-        pauta = c2.number_input(f"2. Presupuesto Publicitario ({m_sufijo})", min_value=0, value=val_inicial, step=step_val, help="Ingresa manualmente el valor exacto de tu pauta o usa los botones para subir/bajar.")
+        pauta = c2.number_input(f"Presupuesto Publicitario Total ({m_sufijo})", min_value=0, value=val_inicial, step=step_val, help="Presupuesto a distribuir entre todas las plataformas.")
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
@@ -268,25 +295,24 @@ elif st.session_state.pantalla_actual == "simulador":
         st.plotly_chart(fig, use_container_width=True)
         
         st.markdown("---")
-        st.subheader("📱 Distribución Estratégica de Pauta")
+        st.subheader("📱 2. Distribución Estratégica de Pauta")
         if pauta > 0:
             pauta_usd = pauta / m_factor
-            
             if pauta_usd < 40:
                 plataformas = ['Meta (Instagram/Facebook)']
                 valores = [pauta]
                 colores = ['#E1306C']
-                st.info("💡 **Estrategia Micro-Presupuesto:** Se asigna el 100% a **Meta Ads (Instagram/FB)**. Con presupuestos reducidos, dividir la pauta en varias plataformas debilita el aprendizaje del algoritmo publicitario.")
+                st.info("💡 **Micro-Presupuesto:** 100% a **Meta Ads (Instagram/FB)**. Evitamos diluir tu dinero para que el algoritmo aprenda.")
             elif pauta_usd < 150:
                 plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)']
                 valores = [pauta * 0.70, pauta * 0.30]
                 colores = ['#E1306C', '#4285F4']
-                st.info("💡 **Estrategia Multicanal Moderada:** 70% en **Meta** para atracción visual y generación de demanda + 30% en **Google Ads** para capturar clientes que buscan activamente tus productos/servicios.")
+                st.info("💡 **Multicanal Moderada:** 70% visual en **Meta** + 30% en **Google Ads** para capturar búsquedas directas.")
             else:
                 plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads']
                 valores = [pauta * 0.50, pauta * 0.30, pauta * 0.20]
                 colores = ['#E1306C', '#4285F4', '#00F2FE'] 
-                st.info("💡 **Estrategia Integral Omnicanal:** Tu presupuesto permite cumplir los mínimos diarios de **TikTok Ads** (20%), capturando audiencia joven, junto a **Meta** (50%) y **Google** (30%).")
+                st.info("💡 **Integral Omnicanal:** Tu presupuesto alcanza para **TikTok Ads** (20%), sumado a **Meta** (50%) y **Google** (30%).")
                 
             dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
             fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
@@ -294,7 +320,44 @@ elif st.session_state.pantalla_actual == "simulador":
             fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350)
             st.plotly_chart(fig_pauta, use_container_width=True)
         else:
-            st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada por plataformas.")
+            st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada.")
+
+        # NUEVA SUITE IA DE MARKETING
+        st.markdown("---")
+        st.subheader("🤖 3. Suite IA de Creación de Campañas")
+        st.markdown("Ya tienes el presupuesto, ahora deja que la Inteligencia Artificial redacte los anuncios para ti basados en el tono de tu empresa.")
+        
+        col_m1, col_m2 = st.columns(2)
+        with col_m1:
+            prod_promo = st.text_input("¿Qué vas a promocionar?", placeholder="Ej. El producto marcado como 'Dormido' o una oferta nueva")
+        with col_m2:
+            tono_marca = st.selectbox("Tono de comunicación de tu marca:", ["Comercial y Directo", "Divertido y Cercano", "Urgente (Oferta por tiempo limitado)", "Elegante y Premium"])
+            
+        if st.button("✨ Generar Textos y Creativos de Campaña", type="primary"):
+            if not ia_activa:
+                st.error("⚠️ La IA está desactivada. Por favor, configura tu API Key en los Secrets.")
+            elif not prod_promo:
+                st.warning("⚠️ Escribe primero el nombre del producto o servicio que quieres promocionar.")
+            else:
+                prompt_marketing = f"""
+                Eres un Director Creativo y Copywriter experto en marketing digital. 
+                El usuario necesita crear una campaña publicitaria para promocionar: '{prod_promo}'.
+                El tono de la marca y la campaña debe ser: '{tono_marca}'.
+                Considerando los datos generales de su negocio y que publicará en Meta/Google, entrégale exactamente esto:
+                
+                1. **Copy para Instagram/Facebook:** Un texto persuasivo listo para copiar y pegar, incluyendo emojis y un llamado a la acción (Call to Action) claro.
+                2. **Título para Google Ads:** 3 opciones de títulos cortos (máximo 30 caracteres cada uno) orientados a búsqueda.
+                3. **Dirección de Arte Visual:** Describe brevemente 1 idea concreta sobre qué tipo de foto, video o diseño gráfico debería usar para que el anuncio llame la atención.
+                
+                Sé muy profesional, estructurado, no uses saludos largos y ve directo al grano.
+                """
+                with st.spinner("Creando magia publicitaria... 🪄"):
+                    try:
+                        res_mkt = modelo_ia.generate_content(prompt_marketing)
+                        st.success("¡Tu campaña está lista!")
+                        st.markdown(f"<div style='background-color: #1a1c24; padding: 20px; border-radius: 10px; border-left: 5px solid #00F2FE;'>{res_mkt.text}</div>", unsafe_allow_html=True)
+                    except Exception as e:
+                        st.error("Hubo un error contactando a la IA. Intenta de nuevo.")
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -314,11 +377,11 @@ elif st.session_state.pantalla_actual == "objetivos":
     st.markdown("### Palancas Estratégicas Avanzadas:")
     p1, p2 = st.columns(2)
     with p1:
-        estacionalidad = st.slider("🔥 Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Nivela la presión del resto del año asignando más peso a épocas de alto volumen (ej. Navidad, Black Friday, Día de la Madre).")
+        estacionalidad = st.slider("🔥 Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Nivela la presión del resto del año asignando más peso a épocas de alto volumen (ej. Navidad, Black Friday).")
     with p2:
         ajuste_tarifas = st.slider("📈 Simulador de Actualización de Tarifas (%)", 0, 30, 0, help="Proyecta el impacto de un ajuste de precios planificado en la reducción de tu carga operativa.")
     
-    costo_prom_actual = st.session_state.costos_editados['Costo (%)'].mean() if not st.session_state.costos_editados.empty else float(costo_base)
+    costo_prom_actual = st.session_state.costos_editados['Costo (%)'].mean() if not st.session_state.costos_editados.empty else 70.0
     margen_comercial = (100 - costo_prom_actual) / 100
     
     gastos_totales = gastos * meses
