@@ -94,28 +94,37 @@ with st.sidebar:
 # ==============================================================================
 # PROCESAMIENTO CON COSTOS INDIVIDUALES (Punto 5)
 # ==============================================================================
+# ==============================================================================
+# PROCESAMIENTO CON COSTOS INDIVIDUALES (Punto 5)
+# ==============================================================================
 df_app = pd.DataFrame()
 if not st.session_state.df_bruto.empty:
     df_temp = st.session_state.df_bruto.copy()
     
-    # Mapeo básico de columnas
-    col_map = {c: 'Sales' for c in df_temp.columns if 'venta' in str(c).lower() or 'sales' in str(c).lower()}
-    col_map.update({c: 'Product Name' for c in df_temp.columns if 'producto' in str(c).lower() or 'name' in str(c).lower()})
-    col_map.update({c: 'Quantity' for c in df_temp.columns if 'cantidad' in str(c).lower() or 'quantity' in str(c).lower()})
-    df_temp = df_temp.rename(columns=col_map)
+    # Mapeo corregido y exacto de columnas
+    column_map = {}
+    for col in df_temp.columns:
+        c = str(col).strip().lower()
+        if any(x in c for x in ['venta', 'sales', 'monto']): column_map[col] = 'Sales'
+        elif any(x in c for x in ['producto', 'product', 'sku']): column_map[col] = 'Product Name'
+        elif any(x in c for x in ['cantidad', 'quantity', 'cant']): column_map[col] = 'Quantity'
+            
+    df_temp = df_temp.rename(columns=column_map)
     
     # Limpieza
     if 'Sales' in df_temp.columns:
         if 'Product Name' not in df_temp.columns: df_temp['Product Name'] = 'General'
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         
+        # Eliminar columnas duplicadas por precaución
+        df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()]
+        
         # Generar tabla de costos únicos
         productos_unicos = df_temp['Product Name'].unique()
         if st.session_state.costos_editados.empty or len(st.session_state.costos_editados) != len(productos_unicos):
             st.session_state.costos_editados = pd.DataFrame({'Product Name': productos_unicos, 'Costo (%)': [60.0]*len(productos_unicos)})
         
-        df_app = df_temp
-
+        df_app = df_temp    
 # ==============================================================================
 # PANTALLAS
 # ==============================================================================
