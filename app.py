@@ -57,7 +57,7 @@ with st.sidebar:
     if st.button("🏠 Inicio", use_container_width=True): cambiar_pantalla("home")
     if st.button("⚡ Diagnóstico Express", use_container_width=True): cambiar_pantalla("express")
     if st.button("🔍 Auditoría de Catálogo", use_container_width=True): cambiar_pantalla("diagnostico")
-    if st.button("🎛️ Simulador y Pauta IA", use_container_width=True): cambiar_pantalla("simulador")
+    if st.button("🎛️ Simulador y Pauta", use_container_width=True): cambiar_pantalla("simulador")
     if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
     
     st.markdown("---")
@@ -109,7 +109,7 @@ with st.sidebar:
                 except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO (CRUZANDO COSTO GLOBAL Y COSTOS INDIVIDUALES)
+# 3. PROCESAMIENTO
 # ==============================================================================
 df_final = pd.DataFrame()
 
@@ -244,7 +244,11 @@ elif st.session_state.pantalla_actual == "simulador":
         st.markdown("### Ajusta tus palancas comerciales:")
         c1, c2 = st.columns(2)
         precio = c1.slider("1. Ajuste General de Precios (%)", -50, 50, 0)
-        pauta = c2.slider(f"2. Pauta Publicitaria Adicional ({m_sufijo})", min_value=int(0 * m_factor), max_value=int(1000000 * m_factor), value=int(100000 * m_factor), step=int(20000 * m_factor))
+        
+        # Pauta Publicitaria realista y editable
+        val_inicial = int(25 * m_factor) # Aprox 100,000 en COP
+        step_val = int(5 * m_factor)     # Aprox 20,000 en COP
+        pauta = c2.number_input(f"2. Presupuesto Publicitario ({m_sufijo})", min_value=0, value=val_inicial, step=step_val, help="Ingresa manualmente el valor exacto de tu pauta o usa los botones para subir/bajar.")
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
@@ -263,6 +267,22 @@ elif st.session_state.pantalla_actual == "simulador":
         ])
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
+        
+        # Nueva Gráfica de Plataformas
+        st.markdown("---")
+        st.subheader("📱 Distribución Sugerida de Pauta Publicitaria")
+        if pauta > 0:
+            dist_data = pd.DataFrame({
+                'Plataforma': ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads'],
+                'Asignación': [pauta * 0.55, pauta * 0.30, pauta * 0.15]
+            })
+            fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, 
+                               color_discrete_sequence=['#E1306C', '#4285F4', '#000000'])
+            fig_pauta.update_traces(textinfo='percent+label')
+            fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350)
+            st.plotly_chart(fig_pauta, use_container_width=True)
+        else:
+            st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada por plataformas.")
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
