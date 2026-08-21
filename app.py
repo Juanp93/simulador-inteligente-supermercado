@@ -250,32 +250,32 @@ elif st.session_state.pantalla_actual == "simulador":
         try: api_key = st.secrets["GEMINI_API_KEY"]
         except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
             
-          if api_key:
-            genai.configure(api_key=api_key)
-            
-            # Le damos exactamente la versión que pide el servidor
-            model = genai.GenerativeModel('gemini-3.6-flash')
-            
-            for msg in st.session_state.historial_chat:
-                with st.chat_message(msg["role"]): st.write(msg["content"])
-            
-            pregunta = st.chat_input("Escribe tu pregunta aquí...")
-            if pregunta:
-                st.session_state.historial_chat.append({"role": "user", "content": pregunta})
-                with st.chat_message("user"): st.write(pregunta)
+            if api_key:
+                genai.configure(api_key=api_key)
                 
-                contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
+                # Le damos exactamente la versión que pide el servidor
+                model = genai.GenerativeModel('gemini-3.6-flash')
                 
-                with st.chat_message("assistant"):
-                    with st.spinner("Analizando con Gemini 3.6 Flash..."):
-                        try:
-                            respuesta = model.generate_content(contexto)
-                            st.write(respuesta.text)
-                            st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
-                        except Exception as e: 
-                            st.error(f"Error de API: {e}")
-        else: 
-            st.info("⚠️ Configura la clave 'GEMINI_API_KEY' en los Secrets de Streamlit para activar el chat.")
+                for msg in st.session_state.historial_chat:
+                    with st.chat_message(msg["role"]): st.write(msg["content"])
+                
+                pregunta = st.chat_input("Escribe tu pregunta aquí...")
+                if pregunta:
+                    st.session_state.historial_chat.append({"role": "user", "content": pregunta})
+                    with st.chat_message("user"): st.write(pregunta)
+                    
+                    contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
+                    
+                    with st.chat_message("assistant"):
+                        with st.spinner("Analizando con Gemini 3.6 Flash..."):
+                            try:
+                                respuesta = model.generate_content(contexto)
+                                st.write(respuesta.text)
+                                st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
+                            except Exception as e: 
+                                st.error(f"Error de API: {e}")
+            else: 
+                st.info("⚠️ Configura la clave 'GEMINI_API_KEY' en los Secrets de Streamlit para activar el chat.")
 
 # ------------------------------------------------------------------------------
 # 4. PLANIFICADOR DE METAS (RESTAURADO Y MULTI-MES)
