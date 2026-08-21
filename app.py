@@ -76,7 +76,6 @@ with st.sidebar:
         else: st.session_state.df_bruto = pd.read_csv(archivo)
         st.success("¡Datos en memoria!")
 
-    # Chatbot Flotante (Inferior)
     st.markdown('<div class="sidebar-chat"></div>', unsafe_allow_html=True)
     st.subheader("💬 Asistente IA")
     
@@ -88,7 +87,6 @@ with st.sidebar:
         for msg in st.session_state.historial_chat:
             with chat_container.chat_message(msg["role"]): st.write(msg["content"])
             
-    # El input siempre se anclará al fondo de la barra lateral
     pregunta = st.chat_input("Consulta a tu IA aquí...")
     if pregunta and ia_activa:
         st.session_state.historial_chat.append({"role": "user", "content": pregunta})
@@ -99,7 +97,7 @@ with st.sidebar:
         Eres el Asesor IA de IntelRetail Pro. 
         Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
         Datos: {resumen_datos}
-        Actúa como experto en negocios. Recomienda estrategias visuales efectivas para estéticas caninas, accesorios o servicios de alto valor si detectas ese nicho.
+        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos (ej. retail, moda, restaurante, servicios profesionales) y adapta tus recomendaciones de marketing y ventas específicamente a ese sector.
         Responde breve y muy práctico a: {pregunta}
         """
         with chat_container.chat_message("assistant"):
@@ -154,7 +152,7 @@ if st.session_state.pantalla_actual == "home":
     st.markdown("#### *Tu copiloto estratégico de inteligencia comercial.*")
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu rentabilidad separando servicios, productos y gastos semanales.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu rentabilidad separando servicios, productos y gastos a 8 semanas.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Diagnóstico", use_container_width=True, type="primary"): cambiar_pantalla("express"); st.rerun()
         st.markdown('<div class="home-card"><h3>🎛️ Simulador e IA</h3><p>Proyecta presupuestos de pauta realistas con la ayuda de tu IA.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Simulador", use_container_width=True): cambiar_pantalla("simulador"); st.rerun()
@@ -167,26 +165,33 @@ if st.session_state.pantalla_actual == "home":
 elif st.session_state.pantalla_actual == "express":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
     st.header("⚡ Diagnóstico Financiero Avanzado (Sin Archivos)")
-    st.markdown("Ingresa los datos fraccionados para un cálculo preciso de tu realidad comercial.")
+    st.markdown("Ingresa los datos fraccionados de los últimos **2 meses** para un cálculo preciso de tu realidad comercial.")
     
-    st.subheader("🗓️ 1. Ingresos Semanales")
+    st.subheader("🗓️ 1. Ingresos Semanales (8 Semanas)")
     sw1, sw2, sw3, sw4 = st.columns(4)
     v_s1 = sw1.number_input("Semana 1", value=1250000.0, step=100000.0)
     v_s2 = sw2.number_input("Semana 2", value=1200000.0, step=100000.0)
     v_s3 = sw3.number_input("Semana 3", value=1300000.0, step=100000.0)
     v_s4 = sw4.number_input("Semana 4", value=1250000.0, step=100000.0)
-    ventas_totales = v_s1 + v_s2 + v_s3 + v_s4
     
-    st.subheader("💼 2. Estructura de Negocio y Egresos")
+    sw5, sw6, sw7, sw8 = st.columns(4)
+    v_s5 = sw5.number_input("Semana 5", value=1250000.0, step=100000.0)
+    v_s6 = sw6.number_input("Semana 6", value=1200000.0, step=100000.0)
+    v_s7 = sw7.number_input("Semana 7", value=1300000.0, step=100000.0)
+    v_s8 = sw8.number_input("Semana 8", value=1250000.0, step=100000.0)
+    
+    ventas_totales = v_s1 + v_s2 + v_s3 + v_s4 + v_s5 + v_s6 + v_s7 + v_s8
+    
+    st.subheader("💼 2. Estructura de Negocio y Egresos (Bimestral)")
     c1, c2, c3 = st.columns(3)
     with c1:
-        mix_servicios = st.slider("% Venta por Servicios", 0, 100, 60, help="Ej: Cortes, estética, peluquería (suelen tener más margen). El resto se asignará a productos físicos.")
+        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60, help="Ideal para negocios mixtos. Ej: Un taller (reparación = servicio, repuestos = producto) o un spa. El porcentaje restante es inventario físico.")
         margen_promedio = st.slider("Margen Neto Promedio (%)", 5, 90, 45)
     with c2:
-        gastos_fijos = st.number_input("Gastos Fijos Frecuentes", value=1200000.0, help="Alquiler, servicios públicos, nómina base.")
-        gastos_variables = st.number_input("Costos Variables Estimados", value=300000.0, help="Empaques, comisiones de tarjetas, insumos de servicios.")
+        gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=2400000.0, help="Alquiler, servicios públicos, nómina base de las 8 semanas.")
+        gastos_variables = st.number_input("Costos Variables Estimados (2 Meses)", value=600000.0, help="Empaques, comisiones bancarias, insumos consumibles.")
     with c3:
-        clientes_mes = st.number_input("Atenciones/Clientes al mes:", value=350)
+        clientes_mes = st.number_input("Atenciones/Clientes Totales (8 Semanas):", value=700)
     
     utilidad = (ventas_totales * (margen_promedio / 100)) - gastos_fijos - gastos_variables
     punto_eq = (gastos_fijos + gastos_variables) / (margen_promedio / 100) if margen_promedio > 0 else 0
@@ -194,9 +199,9 @@ elif st.session_state.pantalla_actual == "express":
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
-    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad > 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA MENSUAL</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia 100% real y libre, descontando absolutamente todos los costos y gastos.</div></div>', unsafe_allow_html=True)
-    r2.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">PUNTO DE EQUILIBRIO</div><div class="metric-value">{m_simbolo}{punto_eq:,.2f}</div><div class="metric-caption">Venta mínima que necesitas facturar este mes para no tener pérdidas financieras.</div></div>', unsafe_allow_html=True)
-    r3.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO</div><div class="metric-value">{m_simbolo}{ticket:,.2f}</div><div class="metric-caption">Dinero que entra a la caja en promedio por cada cliente que atiendes.</div></div>', unsafe_allow_html=True)
+    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad > 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA (8 SEMANAS)</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia 100% real y libre del periodo.</div></div>', unsafe_allow_html=True)
+    r2.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">PUNTO DE EQUILIBRIO BIMESTRAL</div><div class="metric-value">{m_simbolo}{punto_eq:,.2f}</div><div class="metric-caption">Venta mínima en 2 meses para no tener pérdidas.</div></div>', unsafe_allow_html=True)
+    r3.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO</div><div class="metric-value">{m_simbolo}{ticket:,.2f}</div><div class="metric-caption">Dinero promedio por cada cliente atendido.</div></div>', unsafe_allow_html=True)
 
 elif st.session_state.pantalla_actual == "diagnostico":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -227,7 +232,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.plotly_chart(px.scatter(df_g, x='Quantity', y='Ganancia_Neta', size='Sales', color='Product Name', hover_name='Product Name', labels={'Quantity': 'Unds. Vendidas', 'Ganancia_Neta': 'Ganancia Neta'}, height=350).update_layout(showlegend=False, margin=dict(t=10, l=10, r=10, b=10)), use_container_width=True)
         with c_graf2:
             clientes_top = df_final.groupby('Customer Name')['Sales'].sum().reset_index().sort_values('Sales', ascending=False).head(5)
-            st.plotly_chart(px.bar(clientes_top, x='Sales', y='Customer Name', orientation='h', color='Sales', color_continuous_scale='Blues').update_layout(height=350, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10)), use_container_width=True)
+            st.plotly_chart(px.bar(clientes_top, x='Sales', y='Customer Name', orientation='h', color='Sales', color_continuous_scale='Blues', labels={'Sales': 'Ventas', 'Customer Name': 'Nombre del Cliente'}).update_layout(height=350, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10)), use_container_width=True)
 
 elif st.session_state.pantalla_actual == "simulador":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -238,12 +243,12 @@ elif st.session_state.pantalla_actual == "simulador":
     else:
         st.markdown("### Ajusta tus palancas comerciales:")
         c1, c2 = st.columns(2)
-        precio = c1.slider("1. Ajuste General de Precios (%)", -50, 100, 0)
-        pauta = c2.slider(f"2. Pauta Publicitaria Adicional ({m_sufijo})", min_value=int(50000 * m_factor), max_value=int(2000000 * m_factor), value=int(50000 * m_factor), step=int(20000 * m_factor))
+        precio = c1.slider("1. Ajuste General de Precios (%)", -50, 50, 0)
+        pauta = c2.slider(f"2. Pauta Publicitaria Adicional ({m_sufijo})", min_value=int(0 * m_factor), max_value=int(1000000 * m_factor), value=int(100000 * m_factor), step=int(20000 * m_factor))
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
-        cl_n = int(pauta / (5000 * m_factor)) 
+        cl_n = int(pauta / (5000 * m_factor)) if m_factor > 0 else 0
         
         precio_m = df_final['Sales'].mean() / df_final['Quantity'].mean()
         costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
@@ -277,9 +282,9 @@ elif st.session_state.pantalla_actual == "objetivos":
     st.markdown("### Palancas Estratégicas Avanzadas:")
     p1, p2 = st.columns(2)
     with p1:
-        estacionalidad = st.slider("Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Asigna un mayor peso a meses pico (ej. concursos de disfraces en octubre o ventas navideñas) para nivelar el esfuerzo del resto del año.")
+        estacionalidad = st.slider("🔥 Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Nivela la presión del resto del año asignando más peso a épocas de alto volumen (ej. Navidad, Black Friday, Día de la Madre).")
     with p2:
-        ajuste_tarifas = st.slider("Simulador de Actualización de Tarifas (%)", 0, 30, 0, help="Proyecta el impacto de un ajuste de precios planificado (ej. aplicable desde el 1 de diciembre) en la reducción de tu carga operativa.")
+        ajuste_tarifas = st.slider("📈 Simulador de Actualización de Tarifas (%)", 0, 30, 0, help="Proyecta el impacto de un ajuste de precios planificado en la reducción de tu carga operativa.")
     
     costo_prom_actual = st.session_state.costos_editados['Costo (%)'].mean() if not st.session_state.costos_editados.empty else float(costo_base)
     margen_comercial = (100 - costo_prom_actual) / 100
