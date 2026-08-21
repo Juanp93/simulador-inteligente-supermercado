@@ -249,7 +249,7 @@ elif st.session_state.pantalla_actual == "simulador":
         api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
         if api_key:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-pro')
+            model = genai.GenerativeModel('gemini-1.5-flash')
             
             for msg in st.session_state.historial_chat:
                 with st.chat_message(msg["role"]): st.write(msg["content"])
