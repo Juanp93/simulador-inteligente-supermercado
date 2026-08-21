@@ -246,29 +246,51 @@ elif st.session_state.pantalla_actual == "simulador":
         st.subheader("🤖 Chatbot Analista: Pregúntale a tus Datos (Gemini IA)")
         st.markdown("La IA lee tu tabla de ventas. Pregúntale: *'¿Cuál es mi producto con mayor margen?'* o *'Escribe 2 copys para mi mejor producto'*.")
         
-        api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
+        api_key = None
+        try: api_key = st.secrets["GEMINI_API_KEY"]
+        except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
+            
         if api_key:
             genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-1.5-flash')
             
-            for msg in st.session_state.historial_chat:
-                with st.chat_message(msg["role"]): st.write(msg["content"])
+            # --- JUGADA MAESTRA: BÚSQUEDA AUTOMÁTICA DE MODELOS ---
+            modelo_disponible = None
+            try:
+                for m in genai.list_models():
+                    if 'generateContent' in m.supported_generation_methods:
+                        modelo_disponible = m.name
+                        if 'flash' in m.name or 'pro' in m.name:
+                            break # Si encuentra un Flash o Pro, se queda con ese inmediatamente.
+            except Exception as e:
+                st.error(f"Error al verificar tu cuenta de Google: {e}")
+            # --------------------------------------------------------
             
-            pregunta = st.chat_input("Escribe tu pregunta aquí...")
-            if pregunta:
-                st.session_state.historial_chat.append({"role": "user", "content": pregunta})
-                with st.chat_message("user"): st.write(pregunta)
+            if modelo_disponible:
+                model = genai.GenerativeModel(modelo_disponible)
                 
-                contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde como experto en retail a: {pregunta}"
+                for msg in st.session_state.historial_chat:
+                    with st.chat_message(msg["role"]): st.write(msg["content"])
                 
-                with st.chat_message("assistant"):
-                    with st.spinner("Analizando catálogo..."):
-                        try:
-                            respuesta = model.generate_content(contexto)
-                            st.write(respuesta.text)
-                            st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
-                        except Exception as e: st.error(f"Error de API: {e}")
-        else: st.info("⚠️ Ingresa una clave API de Google AI Studio para activar el chat.")
+                pregunta = st.chat_input("Escribe tu pregunta aquí...")
+                if pregunta:
+                    st.session_state.historial_chat.append({"role": "user", "content": pregunta})
+                    with st.chat_message("user"): st.write(pregunta)
+                    
+                    contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
+                    
+                    with st.chat_message("assistant"):
+                        # Mostramos qué modelo encontró exactamente
+                        nombre_limpio = modelo_disponible.replace('models/', '')
+                        with st.spinner(f"Analizando con {nombre_limpio}..."):
+                            try:
+                                respuesta = model.generate_content(contexto)
+                                st.write(respuesta.text)
+                                st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
+                            except Exception as e: st.error(f"Error de API: {e}")
+            else:
+                st.error("Tu API Key es válida, pero Google no retornó ningún modelo de chat disponible para tu cuenta.")
+        else: 
+            st.info("⚠️ Configura la clave 'GEMINI_API_KEY' en los Secrets de Streamlit para activar el chat.")
 
 # ------------------------------------------------------------------------------
 # 4. PLANIFICADOR DE METAS (RESTAURADO Y MULTI-MES)
