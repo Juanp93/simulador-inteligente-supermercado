@@ -96,7 +96,7 @@ with st.sidebar:
         Eres el Asesor IA de IntelRetail Pro. 
         Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
         Datos: {resumen_datos}
-        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos (ej. retail, moda, restaurante, servicios profesionales) y adapta tus recomendaciones de marketing y ventas específicamente a ese sector.
+        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos y adapta tus recomendaciones de marketing y ventas específicamente a ese sector.
         Responde breve y muy práctico a: {pregunta}
         """
         with chat_container.chat_message("assistant"):
@@ -136,7 +136,6 @@ if not st.session_state.df_bruto.empty:
         
         productos_unicos = df_temp['Product Name'].unique()
         if st.session_state.costos_editados.empty or len(st.session_state.costos_editados) != len(productos_unicos):
-            # Inicia con un 70% por defecto general
             st.session_state.costos_editados = pd.DataFrame({'Product Name': productos_unicos, 'Costo (%)': [70.0]*len(productos_unicos)})
         
         df_final = pd.merge(df_temp, st.session_state.costos_editados, on='Product Name', how='left')
@@ -185,11 +184,11 @@ elif st.session_state.pantalla_actual == "express":
     st.subheader("💼 2. Estructura de Negocio y Egresos (Bimestral)")
     c1, c2, c3 = st.columns(3)
     with c1:
-        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60, help="Ideal para negocios mixtos. El porcentaje restante es inventario físico.")
+        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60)
         margen_promedio = st.slider("Margen Neto Promedio (%)", 5, 90, 45)
     with c2:
-        gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=2400000.0, help="Alquiler, servicios públicos, nómina base de las 8 semanas.")
-        gastos_variables = st.number_input("Costos Variables Estimados (2 Meses)", value=600000.0, help="Empaques, comisiones bancarias, insumos consumibles.")
+        gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=2400000.0)
+        gastos_variables = st.number_input("Costos Variables Estimados (2 Meses)", value=600000.0)
     with c3:
         clientes_mes = st.number_input("Atenciones/Clientes Totales (8 Semanas):", value=700)
     
@@ -209,33 +208,26 @@ elif st.session_state.pantalla_actual == "diagnostico":
     if df_final.empty: 
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda para comenzar.")
     else:
-        st.subheader("⚙️ 1. Ajuste de Costos")
+        st.subheader("⚙️ 1. Ajuste de Costos (Proveedores o Producción)")
+        st.markdown("💡 **¿Qué significa esto?** Es el porcentaje del precio de venta que te cuesta adquirir o fabricar el producto. Si vendes algo en $100 y te costó $70 al proveedor, tu costo es del 70%.")
         
-        # SLIDER GLOBAL INTELIGENTE
         c_sl, c_btn = st.columns([3, 1])
         with c_sl:
-            nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0, help="Usa este slider y presiona 'Aplicar' para reescribir toda la tabla de abajo. Luego podrás editar las excepciones de forma manual.")
+            nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0, help="Usa este slider y presiona 'Aplicar' para reescribir toda la tabla de abajo de forma masiva.")
         with c_btn:
-            st.write("") # Espaciador para alinear el botón
+            st.write("") 
             st.write("")
             if st.button("Aplicar a todos", use_container_width=True, type="primary"):
                 st.session_state.costos_editados['Costo (%)'] = float(nuevo_costo_global)
                 st.rerun()
 
-        st.markdown("Edita individualmente usando las celdas de la tabla (Soporta navegación con teclado y Control+V):")
-        # FORMATO ESTRICTO NUMÉRICO PARA LA TABLA (Mejora el uso de ENTER)
+        st.markdown("Edita individualmente usando las celdas de la tabla (Soporta navegación rápida con teclado):")
         st.session_state.costos_editados = st.data_editor(
             st.session_state.costos_editados, 
             hide_index=True, 
             use_container_width=True,
             column_config={
-                "Costo (%)": st.column_config.NumberColumn(
-                    "Costo (%)",
-                    min_value=0.0,
-                    max_value=100.0,
-                    step=1.0,
-                    format="%.1f %%"
-                )
+                "Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")
             }
         )
         
@@ -253,13 +245,33 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
         st.markdown("---")
-        st.subheader("🎯 3. Matriz BCG y Concentración de Clientes")
-        c_graf1, c_graf2 = st.columns(2)
-        with c_graf1:
-            st.plotly_chart(px.scatter(df_g, x='Quantity', y='Ganancia_Neta', size='Sales', color='Product Name', hover_name='Product Name', labels={'Quantity': 'Unds. Vendidas', 'Ganancia_Neta': 'Ganancia Neta'}, height=350).update_layout(showlegend=False, margin=dict(t=10, l=10, r=10, b=10)), use_container_width=True)
-        with c_graf2:
-            clientes_top = df_final.groupby('Customer Name')['Sales'].sum().reset_index().sort_values('Sales', ascending=False).head(5)
-            st.plotly_chart(px.bar(clientes_top, x='Sales', y='Customer Name', orientation='h', color='Sales', color_continuous_scale='Blues', labels={'Sales': 'Ventas', 'Customer Name': 'Nombre del Cliente'}).update_layout(height=350, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10)), use_container_width=True)
+        st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
+        fig_bcg = px.scatter(df_g, x='Quantity', y='Ganancia_Neta', size='Sales', color='Product Name', hover_name='Product Name', labels={'Quantity': 'Unidades Vendidas', 'Ganancia_Neta': 'Ganancia Neta Libre'})
+        fig_bcg.update_layout(showlegend=True, height=500, margin=dict(t=10, l=10, r=10, b=10))
+        st.plotly_chart(fig_bcg, use_container_width=True)
+
+        st.markdown("---")
+        st.subheader("📊 4. Análisis Profundo del Negocio")
+        tipo_analisis = st.radio(
+            "Selecciona la métrica que deseas visualizar en la gráfica de barras:",
+            ["📦 Top 10 Productos (Por Unidades Vendidas)", 
+             "💰 Top 10 Productos (Por Ingreso Bruto)", 
+             "👥 Top 10 Clientes (Por Facturación)"],
+            horizontal=True
+        )
+
+        if "Clientes" in tipo_analisis:
+            data_plot = df_final.groupby('Customer Name')['Sales'].sum().reset_index().sort_values('Sales', ascending=False).head(10)
+            fig_extra = px.bar(data_plot, x='Sales', y='Customer Name', orientation='h', color='Sales', color_continuous_scale='Blues', labels={'Sales': 'Facturación Total', 'Customer Name': 'Nombre del Cliente'})
+        elif "Ingreso" in tipo_analisis:
+            data_plot = df_final.groupby('Product Name')['Sales'].sum().reset_index().sort_values('Sales', ascending=False).head(10)
+            fig_extra = px.bar(data_plot, x='Sales', y='Product Name', orientation='h', color='Sales', color_continuous_scale='Greens', labels={'Sales': 'Ingresos Brutos Generados', 'Product Name': 'Producto'})
+        else:
+            data_plot = df_final.groupby('Product Name')['Quantity'].sum().reset_index().sort_values('Quantity', ascending=False).head(10)
+            fig_extra = px.bar(data_plot, x='Quantity', y='Product Name', orientation='h', color='Quantity', color_continuous_scale='Oranges', labels={'Quantity': 'Unidades Totales Vendidas', 'Product Name': 'Producto'})
+
+        fig_extra.update_layout(height=450, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10))
+        st.plotly_chart(fig_extra, use_container_width=True)
 
 elif st.session_state.pantalla_actual == "simulador":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -274,7 +286,7 @@ elif st.session_state.pantalla_actual == "simulador":
         
         val_inicial = int(25 * m_factor) 
         step_val = int(5 * m_factor)     
-        pauta = c2.number_input(f"Presupuesto Publicitario Total ({m_sufijo})", min_value=0, value=val_inicial, step=step_val, help="Presupuesto a distribuir entre todas las plataformas.")
+        pauta = c2.number_input(f"Presupuesto Publicitario Total ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
@@ -299,20 +311,14 @@ elif st.session_state.pantalla_actual == "simulador":
         if pauta > 0:
             pauta_usd = pauta / m_factor
             if pauta_usd < 40:
-                plataformas = ['Meta (Instagram/Facebook)']
-                valores = [pauta]
-                colores = ['#E1306C']
-                st.info("💡 **Micro-Presupuesto:** 100% a **Meta Ads (Instagram/FB)**. Evitamos diluir tu dinero para que el algoritmo aprenda.")
+                plataformas, valores, colores = ['Meta (Instagram/Facebook)'], [pauta], ['#E1306C']
+                st.info("💡 **Micro-Presupuesto:** 100% a **Meta Ads (Instagram/FB)**. Evitamos diluir tu dinero.")
             elif pauta_usd < 150:
-                plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)']
-                valores = [pauta * 0.70, pauta * 0.30]
-                colores = ['#E1306C', '#4285F4']
-                st.info("💡 **Multicanal Moderada:** 70% visual en **Meta** + 30% en **Google Ads** para capturar búsquedas directas.")
+                plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)'], [pauta * 0.70, pauta * 0.30], ['#E1306C', '#4285F4']
+                st.info("💡 **Multicanal Moderada:** 70% visual en **Meta** + 30% en **Google Ads**.")
             else:
-                plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads']
-                valores = [pauta * 0.50, pauta * 0.30, pauta * 0.20]
-                colores = ['#E1306C', '#4285F4', '#00F2FE'] 
-                st.info("💡 **Integral Omnicanal:** Tu presupuesto alcanza para **TikTok Ads** (20%), sumado a **Meta** (50%) y **Google** (30%).")
+                plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads'], [pauta * 0.50, pauta * 0.30, pauta * 0.20], ['#E1306C', '#4285F4', '#00F2FE'] 
+                st.info("💡 **Integral Omnicanal:** Tu presupuesto alcanza para **TikTok Ads** (20%), **Meta** (50%) y **Google** (30%).")
                 
             dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
             fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
@@ -322,42 +328,24 @@ elif st.session_state.pantalla_actual == "simulador":
         else:
             st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada.")
 
-        # NUEVA SUITE IA DE MARKETING
         st.markdown("---")
         st.subheader("🤖 3. Suite IA de Creación de Campañas")
-        st.markdown("Ya tienes el presupuesto, ahora deja que la Inteligencia Artificial redacte los anuncios para ti basados en el tono de tu empresa.")
+        st.markdown("Deja que la IA redacte los anuncios para ti basados en el tono de tu empresa.")
         
         col_m1, col_m2 = st.columns(2)
-        with col_m1:
-            prod_promo = st.text_input("¿Qué vas a promocionar?", placeholder="Ej. El producto marcado como 'Dormido' o una oferta nueva")
-        with col_m2:
-            tono_marca = st.selectbox("Tono de comunicación de tu marca:", ["Comercial y Directo", "Divertido y Cercano", "Urgente (Oferta por tiempo limitado)", "Elegante y Premium"])
+        with col_m1: prod_promo = st.text_input("¿Qué vas a promocionar?")
+        with col_m2: tono_marca = st.selectbox("Tono de comunicación:", ["Comercial y Directo", "Divertido y Cercano", "Urgente (Oferta)", "Elegante y Premium"])
             
-        if st.button("✨ Generar Textos y Creativos de Campaña", type="primary"):
-            if not ia_activa:
-                st.error("⚠️ La IA está desactivada. Por favor, configura tu API Key en los Secrets.")
-            elif not prod_promo:
-                st.warning("⚠️ Escribe primero el nombre del producto o servicio que quieres promocionar.")
+        if st.button("✨ Generar Campaña", type="primary"):
+            if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
+            elif not prod_promo: st.warning("⚠️ Escribe el producto a promocionar.")
             else:
-                prompt_marketing = f"""
-                Eres un Director Creativo y Copywriter experto en marketing digital. 
-                El usuario necesita crear una campaña publicitaria para promocionar: '{prod_promo}'.
-                El tono de la marca y la campaña debe ser: '{tono_marca}'.
-                Considerando los datos generales de su negocio y que publicará en Meta/Google, entrégale exactamente esto:
-                
-                1. **Copy para Instagram/Facebook:** Un texto persuasivo listo para copiar y pegar, incluyendo emojis y un llamado a la acción (Call to Action) claro.
-                2. **Título para Google Ads:** 3 opciones de títulos cortos (máximo 30 caracteres cada uno) orientados a búsqueda.
-                3. **Dirección de Arte Visual:** Describe brevemente 1 idea concreta sobre qué tipo de foto, video o diseño gráfico debería usar para que el anuncio llame la atención.
-                
-                Sé muy profesional, estructurado, no uses saludos largos y ve directo al grano.
-                """
-                with st.spinner("Creando magia publicitaria... 🪄"):
+                prompt_marketing = f"Eres un Copywriter experto. Crea una campaña para '{prod_promo}' con tono '{tono_marca}'. Entrega: 1) Copy para Meta con emojis y CTA. 2) 3 Títulos cortos para Google Ads. 3) 1 Idea de diseño visual/arte."
+                with st.spinner("Creando magia... 🪄"):
                     try:
                         res_mkt = modelo_ia.generate_content(prompt_marketing)
-                        st.success("¡Tu campaña está lista!")
                         st.markdown(f"<div style='background-color: #1a1c24; padding: 20px; border-radius: 10px; border-left: 5px solid #00F2FE;'>{res_mkt.text}</div>", unsafe_allow_html=True)
-                    except Exception as e:
-                        st.error("Hubo un error contactando a la IA. Intenta de nuevo.")
+                    except: st.error("Error contactando a la IA.")
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -365,21 +353,15 @@ elif st.session_state.pantalla_actual == "objetivos":
     
     st.markdown("### Configura el entorno operativo de tu negocio:")
     c1, c2, c3, c4 = st.columns(4)
-    with c1: 
-        meta = st.number_input(f"Ganancia Deseada ({m_sufijo}):", value=10000000.0, step=500000.0)
-    with c2: 
-        meses = st.slider("Horizonte (Meses):", 1, 12, 1)
-    with c3: 
-        gastos = st.number_input(f"Gastos Fijos/Mes ({m_sufijo}):", value=1500000.0, step=100000.0)
-    with c4:
-        capacidad_max = st.number_input("Tope Operativo Diario (Turnos/Clientes):", value=20, help="¿Cuál es tu límite físico real? Si superas este tope, el sistema emitirá alerta roja.")
+    with c1: meta = st.number_input(f"Ganancia Deseada ({m_sufijo}):", value=10000000.0, step=500000.0)
+    with c2: meses = st.slider("Horizonte (Meses):", 1, 12, 1)
+    with c3: gastos = st.number_input(f"Gastos Fijos/Mes ({m_sufijo}):", value=1500000.0, step=100000.0)
+    with c4: capacidad_max = st.number_input("Tope Operativo Diario:", value=20)
         
     st.markdown("### Palancas Estratégicas Avanzadas:")
     p1, p2 = st.columns(2)
-    with p1:
-        estacionalidad = st.slider("🔥 Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Nivela la presión del resto del año asignando más peso a épocas de alto volumen (ej. Navidad, Black Friday).")
-    with p2:
-        ajuste_tarifas = st.slider("📈 Simulador de Actualización de Tarifas (%)", 0, 30, 0, help="Proyecta el impacto de un ajuste de precios planificado en la reducción de tu carga operativa.")
+    with p1: estacionalidad = st.slider("🔥 Multiplicador de Temporada Alta (%)", 0, 50, 0)
+    with p2: ajuste_tarifas = st.slider("📈 Simulador de Actualización de Tarifas (%)", 0, 30, 0)
     
     costo_prom_actual = st.session_state.costos_editados['Costo (%)'].mean() if not st.session_state.costos_editados.empty else 70.0
     margen_comercial = (100 - costo_prom_actual) / 100
