@@ -219,7 +219,6 @@ elif st.session_state.pantalla_actual == "simulador":
     if df_app.empty: st.warning("Carga tus datos en el menú lateral.")
     else:
         st.markdown("### Ajusta tus palancas comerciales:")
-        # SLIDERS AGRUPADOS Y RANGO AMPLIADO (-50 a 100)
         c1, c2, c3 = st.columns(3)
         precio = c1.slider("1. Ajuste de Precios (%)", -50, 100, 0, help="Simula descuentos o incrementos masivos de precios.")
         pauta = c2.slider("2. Presupuesto Pauta", 0, int(5000 * m_factor), 0, int(100 * m_factor))
@@ -234,7 +233,6 @@ elif st.session_state.pantalla_actual == "simulador":
         c_sim = (df_app['Sales'] * (costo_sim/100) * factor_cantidad).sum() + ((cl_n * 1.5) * precio_m * (costo_sim/100))
         g_sim = v_sim - c_sim - pauta
         
-        # GRÁFICA CON TEXTOS VISIBLES
         fig = go.Figure(data=[
             go.Bar(name='Histórico', x=['Ventas Totales', 'Ganancia Neta'], y=[df_app['Sales'].sum(), df_app['Ganancia_Neta'].sum()], marker_color='#636EFA', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
             go.Bar(name='Proyectado', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
@@ -245,25 +243,27 @@ elif st.session_state.pantalla_actual == "simulador":
         st.markdown("---")
         st.subheader("🤖 Chatbot Analista: Pregúntale a tus Datos (Gemini IA)")
         st.markdown("La IA lee tu tabla de ventas. Pregúntale: *'¿Cuál es mi producto con mayor margen?'* o *'Escribe 2 copys para mi mejor producto'*.")
-
-    api_key = None
-        try: api_key = st.secrets["GEMINI_API_KEY"]
-        except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
-    
+        
+        api_key = None
+        try:
+            api_key = st.secrets["GEMINI_API_KEY"]
+        except:
+            api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
+        
         if api_key:
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-3.6-flash')
-         
+            
             for msg in st.session_state.historial_chat:
                 with st.chat_message(msg["role"]): st.write(msg["content"])
-        
+            
             pregunta = st.chat_input("Escribe tu pregunta aquí...")
             if pregunta:
                 st.session_state.historial_chat.append({"role": "user", "content": pregunta})
                 with st.chat_message("user"): st.write(pregunta)
-            
+                
                 contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
-            
+                
                 with st.chat_message("assistant"):
                     with st.spinner("Analizando con Gemini 3.6 Flash..."):
                         try:
