@@ -267,27 +267,25 @@ elif st.session_state.pantalla_actual == "simulador":
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
         
-        # Distribución de Pauta Inteligente y Dinámica
         st.markdown("---")
         st.subheader("📱 Distribución Estratégica de Pauta")
         if pauta > 0:
             pauta_usd = pauta / m_factor
             
-            # Lógica inteligente según umbral de inversión
-            if pauta_usd < 40:  # Presupuesto Micro (Menos de ~160.000 COP)
+            if pauta_usd < 40:
                 plataformas = ['Meta (Instagram/Facebook)']
                 valores = [pauta]
                 colores = ['#E1306C']
                 st.info("💡 **Estrategia Micro-Presupuesto:** Se asigna el 100% a **Meta Ads (Instagram/FB)**. Con presupuestos reducidos, dividir la pauta en varias plataformas debilita el aprendizaje del algoritmo publicitario.")
-            elif pauta_usd < 150: # Presupuesto Medio (Hasta ~600.000 COP)
+            elif pauta_usd < 150:
                 plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)']
                 valores = [pauta * 0.70, pauta * 0.30]
                 colores = ['#E1306C', '#4285F4']
                 st.info("💡 **Estrategia Multicanal Moderada:** 70% en **Meta** para atracción visual y generación de demanda + 30% en **Google Ads** para capturar clientes que buscan activamente tus productos/servicios.")
-            else: # Presupuesto Alto
+            else:
                 plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads']
                 valores = [pauta * 0.50, pauta * 0.30, pauta * 0.20]
-                colores = ['#E1306C', '#4285F4', '#00F2FE'] # Cyan brillante para TikTok
+                colores = ['#E1306C', '#4285F4', '#00F2FE'] 
                 st.info("💡 **Estrategia Integral Omnicanal:** Tu presupuesto permite cumplir los mínimos diarios de **TikTok Ads** (20%), capturando audiencia joven, junto a **Meta** (50%) y **Google** (30%).")
                 
             dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
@@ -332,7 +330,7 @@ elif st.session_state.pantalla_actual == "objetivos":
     t_prom_simulado = t_prom_base * (1 + (ajuste_tarifas/100))
     
     clientes_diarios = int(np.ceil(ventas_diarias_req / t_prom_simulado)) if t_prom_simulado > 0 else 0
-    alerta_capacidad = "metric-danger" if clientes_diarios > capacity_var if 'capacity_var' in locals() else capacidad_max else "metric-warning"
+    alerta_capacidad = "metric-danger" if clientes_diarios > capacidad_max else "metric-warning"
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
