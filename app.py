@@ -250,7 +250,7 @@ api_key = None
         try: api_key = st.secrets["GEMINI_API_KEY"]
         except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
         
-        if api_key:
+if api_key:
             genai.configure(api_key=api_key)
             model = genai.GenerativeModel('gemini-3.6-flash')
             
