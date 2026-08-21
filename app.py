@@ -40,16 +40,17 @@ st.markdown("""
     .metric-danger { border-left: 5px solid #EF553B; }
     .metric-title { font-size: 13px; color: #A3A3A3; font-weight: bold; text-transform: uppercase; }
     .metric-value { font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
-    .metric-caption { font-size: 12px; color: #858585; margin-top: 4px; }
+    .metric-caption { font-size: 12px; color: #858585; margin-top: 4px; line-height: 1.4; }
     .home-card { background-color: #1a1c24; border: 1px solid #2d3139; border-radius: 12px; padding: 25px; margin-bottom: 20px; text-align: center; }
     .home-card h3 { color: #ffffff; margin-bottom: 10px; font-size: 18px; }
     .home-card p { color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }
     div[data-testid="stSidebarNav"] {display: none;}
+    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }
 </style>
 """, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. BARRA LATERAL (NAVEGACIÓN, DIVISAS, DATOS Y CHATBOT GLOBAL)
+# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO
 # ==============================================================================
 with st.sidebar:
     st.title("🧭 Navegación")
@@ -60,52 +61,54 @@ with st.sidebar:
     if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
     
     st.markdown("---")
-    st.header("💱 Moneda Global")
-    selector_moneda = st.selectbox("Divisa:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
+    selector_moneda = st.selectbox("💱 Divisa:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
     st.markdown("---")
-    st.header("📁 Ingesta de Datos")
-    st.download_button("📥 Plantilla Avanzada", generar_plantilla_excel(), "plantilla.xlsx")
-    costo_base = st.slider("Costo Global por Defecto (%)", 10, 90, 70, 5, help="Se usará como base para todos los productos.")
-    archivo = st.file_uploader("Sube tus ventas:", type=['csv', 'xlsx'])
+    st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
+    costo_base = st.slider("Costo Global Base (%)", 10, 90, 70, 5)
+    archivo = st.file_uploader("📁 Sube tus ventas:", type=['csv', 'xlsx'])
     
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
         else: st.session_state.df_bruto = pd.read_csv(archivo)
         st.success("¡Datos en memoria!")
 
-    st.markdown("---")
-    st.header("💬 Asesor IA (Copiloto)")
+    # Chatbot Flotante (Inferior)
+    st.markdown('<div class="sidebar-chat"></div>', unsafe_allow_html=True)
+    st.subheader("💬 Asistente IA")
+    
+    chat_container = st.container(height=300)
+    
     if not ia_activa:
-        st.error("⚠️ Falta API Key en Secrets")
+        chat_container.error("⚠️ Falta API Key")
     else:
         for msg in st.session_state.historial_chat:
-            with st.chat_message(msg["role"]): st.write(msg["content"])
+            with chat_container.chat_message(msg["role"]): st.write(msg["content"])
+            
+    # El input siempre se anclará al fondo de la barra lateral
+    pregunta = st.chat_input("Consulta a tu IA aquí...")
+    if pregunta and ia_activa:
+        st.session_state.historial_chat.append({"role": "user", "content": pregunta})
+        with chat_container.chat_message("user"): st.write(pregunta)
         
-        pregunta = st.chat_input("Pregunta algo...")
-        if pregunta:
-            st.session_state.historial_chat.append({"role": "user", "content": pregunta})
-            with st.chat_message("user"): st.write(pregunta)
-            
-            resumen_datos = st.session_state.df_bruto.head(10).to_string() if not st.session_state.df_bruto.empty else "Sin datos"
-            prompt_experto = f"""
-            Eres el Asesor IA de IntelRetail Pro. 
-            Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
-            Datos recientes: {resumen_datos}
-            Instrucción vital: Analiza el nicho de los productos. Si detectas servicios de cuidado de animales, estética canina o accesorios para mascotas, enfatiza estrategias de marketing altamente visuales para redes sociales.
-            Responde de forma comercial y experta a: {pregunta}
-            """
-            
-            with st.chat_message("assistant"):
-                with st.spinner("Analizando..."):
-                    try:
-                        respuesta = modelo_ia.generate_content(prompt_experto)
-                        st.write(respuesta.text)
-                        st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
-                    except Exception as e: st.error("Error de conexión.")
+        resumen_datos = st.session_state.df_bruto.head(10).to_string() if not st.session_state.df_bruto.empty else "Sin datos"
+        prompt_experto = f"""
+        Eres el Asesor IA de IntelRetail Pro. 
+        Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
+        Datos: {resumen_datos}
+        Actúa como experto en negocios. Recomienda estrategias visuales efectivas para estéticas caninas, accesorios o servicios de alto valor si detectas ese nicho.
+        Responde breve y muy práctico a: {pregunta}
+        """
+        with chat_container.chat_message("assistant"):
+            with st.spinner("Pensando..."):
+                try:
+                    respuesta = modelo_ia.generate_content(prompt_experto)
+                    st.write(respuesta.text)
+                    st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
+                except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
 # 3. PROCESAMIENTO (CRUZANDO COSTO GLOBAL Y COSTOS INDIVIDUALES)
@@ -135,7 +138,6 @@ if not st.session_state.df_bruto.empty:
         df_temp['Quantity'] = pd.to_numeric(df_temp['Quantity'], errors='coerce').fillna(1)
         
         productos_unicos = df_temp['Product Name'].unique()
-        # Si la tabla de costos está vacía, la llenamos usando el COSTO GLOBAL DEFINIDO EN LA BARRA LATERAL
         if st.session_state.costos_editados.empty or len(st.session_state.costos_editados) != len(productos_unicos):
             st.session_state.costos_editados = pd.DataFrame({'Product Name': productos_unicos, 'Costo (%)': [float(costo_base)]*len(productos_unicos)})
         
@@ -152,37 +154,49 @@ if st.session_state.pantalla_actual == "home":
     st.markdown("#### *Tu copiloto estratégico de inteligencia comercial.*")
     c1, c2 = st.columns(2)
     with c1:
-        st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu punto de equilibrio sin necesidad de archivos.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu rentabilidad separando servicios, productos y gastos semanales.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Diagnóstico", use_container_width=True, type="primary"): cambiar_pantalla("express"); st.rerun()
-        st.markdown('<div class="home-card"><h3>🎛️ Simulador e IA</h3><p>Proyecta escenarios y chatea con tus datos en la barra lateral.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🎛️ Simulador e IA</h3><p>Proyecta presupuestos de pauta realistas con la ayuda de tu IA.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Simulador", use_container_width=True): cambiar_pantalla("simulador"); st.rerun()
     with c2:
-        st.markdown('<div class="home-card"><h3>🔍 Auditoría de Catálogo</h3><p>Define costos individuales, descubre tu estrella y Pareto.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🔍 Auditoría de Catálogo</h3><p>Métricas humanas y claras sobre la salud de tus productos y servicios.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Auditoría", use_container_width=True): cambiar_pantalla("diagnostico"); st.rerun()
-        st.markdown('<div class="home-card"><h3>🎯 Planificador Metas</h3><p>Calcula tus proyecciones a múltiples meses.</p></div>', unsafe_allow_html=True)
+        st.markdown('<div class="home-card"><h3>🎯 Planificador Estratégico</h3><p>Proyecta incrementos de tarifas, meses pico y tu capacidad operativa tope.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Planificador", use_container_width=True): cambiar_pantalla("objetivos"); st.rerun()
 
 elif st.session_state.pantalla_actual == "express":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
-    st.header("⚡ Diagnóstico Rápido (Sin Archivos)")
+    st.header("⚡ Diagnóstico Financiero Avanzado (Sin Archivos)")
+    st.markdown("Ingresa los datos fraccionados para un cálculo preciso de tu realidad comercial.")
     
-    c1, c2 = st.columns(2)
+    st.subheader("🗓️ 1. Ingresos Semanales")
+    sw1, sw2, sw3, sw4 = st.columns(4)
+    v_s1 = sw1.number_input("Semana 1", value=1250000.0, step=100000.0)
+    v_s2 = sw2.number_input("Semana 2", value=1200000.0, step=100000.0)
+    v_s3 = sw3.number_input("Semana 3", value=1300000.0, step=100000.0)
+    v_s4 = sw4.number_input("Semana 4", value=1250000.0, step=100000.0)
+    ventas_totales = v_s1 + v_s2 + v_s3 + v_s4
+    
+    st.subheader("💼 2. Estructura de Negocio y Egresos")
+    c1, c2, c3 = st.columns(3)
     with c1:
-        venta = st.number_input(f"Venta mensual estimada ({m_sufijo}):", value=5000000.0)
-        margen = st.slider("Margen de ganancia general (%):", 5, 80, 30)
+        mix_servicios = st.slider("% Venta por Servicios", 0, 100, 60, help="Ej: Cortes, estética, peluquería (suelen tener más margen). El resto se asignará a productos físicos.")
+        margen_promedio = st.slider("Margen Neto Promedio (%)", 5, 90, 45)
     with c2:
-        gastos = st.number_input(f"Gastos fijos ({m_sufijo}):", value=1200000.0)
-        clientes = st.number_input("Clientes al mes:", value=350)
+        gastos_fijos = st.number_input("Gastos Fijos Frecuentes", value=1200000.0, help="Alquiler, servicios públicos, nómina base.")
+        gastos_variables = st.number_input("Costos Variables Estimados", value=300000.0, help="Empaques, comisiones de tarjetas, insumos de servicios.")
+    with c3:
+        clientes_mes = st.number_input("Atenciones/Clientes al mes:", value=350)
     
-    utilidad = (venta * (margen / 100)) - gastos
-    punto_eq = gastos / (margen / 100) if margen > 0 else 0
-    ticket = venta / clientes if clientes > 0 else 0
+    utilidad = (ventas_totales * (margen_promedio / 100)) - gastos_fijos - gastos_variables
+    punto_eq = (gastos_fijos + gastos_variables) / (margen_promedio / 100) if margen_promedio > 0 else 0
+    ticket = ventas_totales / clientes_mes if clientes_mes > 0 else 0
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
-    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad > 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia descontando gastos fijos.</div></div>', unsafe_allow_html=True)
-    r2.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">PUNTO DE EQUILIBRIO</div><div class="metric-value">{m_simbolo}{punto_eq:,.2f}</div><div class="metric-caption">Venta mínima requerida.</div></div>', unsafe_allow_html=True)
-    r3.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO</div><div class="metric-value">{m_simbolo}{ticket:,.2f}</div><div class="metric-caption">Gasto medio por cliente.</div></div>', unsafe_allow_html=True)
+    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad > 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA MENSUAL</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia 100% real y libre, descontando absolutamente todos los costos y gastos.</div></div>', unsafe_allow_html=True)
+    r2.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">PUNTO DE EQUILIBRIO</div><div class="metric-value">{m_simbolo}{punto_eq:,.2f}</div><div class="metric-caption">Venta mínima que necesitas facturar este mes para no tener pérdidas financieras.</div></div>', unsafe_allow_html=True)
+    r3.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO</div><div class="metric-value">{m_simbolo}{ticket:,.2f}</div><div class="metric-caption">Dinero que entra a la caja en promedio por cada cliente que atiendes.</div></div>', unsafe_allow_html=True)
 
 elif st.session_state.pantalla_actual == "diagnostico":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
@@ -191,21 +205,20 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda para comenzar.")
     else:
         st.subheader("⚙️ 1. Ajuste de Costos Individuales")
-        st.markdown("Tu catálogo inició con el costo global de la barra lateral. Aquí puedes afinar el **Costo (%)** de productos específicos.")
         st.session_state.costos_editados = st.data_editor(st.session_state.costos_editados, hide_index=True, use_container_width=True)
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final)
         
         st.markdown("---")
-        st.subheader("🏆 2. Métricas Clave de Rentabilidad")
+        st.subheader("🏆 2. Métricas Clave (Análisis Humano)")
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (MÁXIMA UTILIDAD)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]}</b></div></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{df_g["Quantity"].max()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmax()]["Product Name"]}</b></div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{df_g["Quantity"].max()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmax()]["Product Name"]}</b><br>El favorito del público. Es el que más unidades vende y atrae el tráfico recurrente a tu local.</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (RIESGO INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmin()]["Product Name"]}</b></div></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Facturación media por registro.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmin()]["Product Name"]}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
         st.markdown("---")
         st.subheader("🎯 3. Matriz BCG y Concentración de Clientes")
@@ -218,7 +231,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
 elif st.session_state.pantalla_actual == "simulador":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
-    st.header("🎛️ Simulador Financiero")
+    st.header("🎛️ Simulador Financiero y Pauta")
     
     if df_final.empty: 
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda.")
@@ -226,7 +239,7 @@ elif st.session_state.pantalla_actual == "simulador":
         st.markdown("### Ajusta tus palancas comerciales:")
         c1, c2 = st.columns(2)
         precio = c1.slider("1. Ajuste General de Precios (%)", -50, 100, 0)
-        pauta = c2.slider(f"2. Pauta Publicitaria Adicional ({m_sufijo})", 0, int(1000000 * m_factor), 0, int(50000 * m_factor))
+        pauta = c2.slider(f"2. Pauta Publicitaria Adicional ({m_sufijo})", min_value=int(50000 * m_factor), max_value=int(2000000 * m_factor), value=int(50000 * m_factor), step=int(20000 * m_factor))
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
@@ -248,25 +261,45 @@ elif st.session_state.pantalla_actual == "simulador":
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
-    st.header("🎯 Planificador Estratégico Multi-Mes")
+    st.header("🎯 Planificador Estratégico (Modo Dios)")
     
-    c1, c2, c3 = st.columns(3)
-    with c1: meta = st.number_input(f"Ganancia Neta Deseada ({m_sufijo}):", value=10000000.0, step=500000.0)
-    with c2: meses = st.slider("Horizonte (Meses):", 1, 12, 1)
-    with c3: gastos = st.number_input(f"Gastos Fijos Mensuales ({m_sufijo}):", value=1500000.0, step=100000.0)
+    st.markdown("### Configura el entorno operativo de tu negocio:")
+    c1, c2, c3, c4 = st.columns(4)
+    with c1: 
+        meta = st.number_input(f"Ganancia Deseada ({m_sufijo}):", value=10000000.0, step=500000.0)
+    with c2: 
+        meses = st.slider("Horizonte (Meses):", 1, 12, 1)
+    with c3: 
+        gastos = st.number_input(f"Gastos Fijos/Mes ({m_sufijo}):", value=1500000.0, step=100000.0)
+    with c4:
+        capacidad_max = st.number_input("Tope Operativo Diario (Turnos/Clientes):", value=20, help="¿Cuál es tu límite físico real? Si superas este tope, el sistema emitirá alerta roja.")
+        
+    st.markdown("### Palancas Estratégicas Avanzadas:")
+    p1, p2 = st.columns(2)
+    with p1:
+        estacionalidad = st.slider("Multiplicador de Temporada Alta (%)", 0, 50, 0, help="Asigna un mayor peso a meses pico (ej. concursos de disfraces en octubre o ventas navideñas) para nivelar el esfuerzo del resto del año.")
+    with p2:
+        ajuste_tarifas = st.slider("Simulador de Actualización de Tarifas (%)", 0, 30, 0, help="Proyecta el impacto de un ajuste de precios planificado (ej. aplicable desde el 1 de diciembre) en la reducción de tu carga operativa.")
     
     costo_prom_actual = st.session_state.costos_editados['Costo (%)'].mean() if not st.session_state.costos_editados.empty else float(costo_base)
     margen_comercial = (100 - costo_prom_actual) / 100
     
     gastos_totales = gastos * meses
-    ventas_totales_req = (meta + gastos_totales) / margen_comercial if margen_comercial > 0 else 0
+    meta_ajustada_temporada = meta * (1 - (estacionalidad/100))
+    ventas_totales_req = (meta_ajustada_temporada + gastos_totales) / margen_comercial if margen_comercial > 0 else 0
     ventas_diarias_req = ventas_totales_req / (30 * meses)
     
-    t_prom = df_final['Sales'].sum() / len(df_final) if not df_final.empty else (ventas_totales_req / (300 * meses))
-    clientes_diarios = int(np.ceil(ventas_diarias_req / t_prom)) if t_prom > 0 else 0
+    t_prom_base = df_final['Sales'].sum() / len(df_final) if not df_final.empty else (ventas_totales_req / (300 * meses))
+    t_prom_simulado = t_prom_base * (1 + (ajuste_tarifas/100))
+    
+    clientes_diarios = int(np.ceil(ventas_diarias_req / t_prom_simulado)) if t_prom_simulado > 0 else 0
+    alerta_capacidad = "metric-danger" if clientes_diarios > capacidad_max else "metric-warning"
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
-    r1.markdown(f'<div class="metric-container metric-success"><div class="metric-title">FACTURACIÓN TOTAL REQUERIDA</div><div class="metric-value">{m_simbolo}{ventas_totales_req:,.2f}</div><div class="metric-caption">Ventas necesarias en {meses} mes(es).</div></div>', unsafe_allow_html=True)
-    r2.markdown(f'<div class="metric-container"><div class="metric-title">META DE VENTA DIARIA</div><div class="metric-value">{m_simbolo}{ventas_diarias_req:,.2f}</div><div class="metric-caption">Venta mínima promedio cada día.</div></div>', unsafe_allow_html=True)
-    r3.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">CLIENTES DIARIOS</div><div class="metric-value">{clientes_diarios} Compras/Día</div><div class="metric-caption">Basado en tu ticket promedio actual.</div></div>', unsafe_allow_html=True)
+    r1.markdown(f'<div class="metric-container metric-success"><div class="metric-title">FACTURACIÓN TOTAL REQUERIDA</div><div class="metric-value">{m_simbolo}{ventas_totales_req:,.2f}</div><div class="metric-caption">Ventas necesarias estimadas en {meses} mes(es).</div></div>', unsafe_allow_html=True)
+    r2.markdown(f'<div class="metric-container"><div class="metric-title">META DE VENTA DIARIA</div><div class="metric-value">{m_simbolo}{ventas_diarias_req:,.2f}</div><div class="metric-caption">Venta mínima promedio cada día para llegar al objetivo.</div></div>', unsafe_allow_html=True)
+    r3.markdown(f'<div class="metric-container {alerta_capacidad}"><div class="metric-title">CLIENTES DIARIOS REQUERIDOS</div><div class="metric-value">{clientes_diarios} Compras/Día</div><div class="metric-caption">Límite Operativo configurado: {capacidad_max} atenciones al día.</div></div>', unsafe_allow_html=True)
+    
+    if clientes_diarios > capacidad_max:
+        st.error(f"🚨 ¡ALERTA OPERATIVA! Tu meta requiere {clientes_diarios} clientes diarios, pero tu negocio solo soporta {capacidad_max}. Debes subir tus tarifas, reducir tus costos operativos o extender el plazo de la meta.")
