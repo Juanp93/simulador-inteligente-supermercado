@@ -245,35 +245,35 @@ elif st.session_state.pantalla_actual == "simulador":
         st.markdown("---")
         st.subheader("🤖 Chatbot Analista: Pregúntale a tus Datos (Gemini IA)")
         st.markdown("La IA lee tu tabla de ventas. Pregúntale: *'¿Cuál es mi producto con mayor margen?'* o *'Escribe 2 copys para mi mejor producto'*.")
-        
+
 api_key = None
-        try: api_key = st.secrets["GEMINI_API_KEY"]
-        except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
+    try: api_key = st.secrets["GEMINI_API_KEY"]
+    except: api_key = st.text_input("Ingresa tu API Key de Gemini para chatear:", type="password")
+    
+    if api_key:
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-3.6-flash')
         
-if api_key:
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel('gemini-3.6-flash')
+        for msg in st.session_state.historial_chat:
+            with st.chat_message(msg["role"]): st.write(msg["content"])
+        
+        pregunta = st.chat_input("Escribe tu pregunta aquí...")
+        if pregunta:
+            st.session_state.historial_chat.append({"role": "user", "content": pregunta})
+            with st.chat_message("user"): st.write(pregunta)
             
-            for msg in st.session_state.historial_chat:
-                with st.chat_message(msg["role"]): st.write(msg["content"])
+            contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
             
-            pregunta = st.chat_input("Escribe tu pregunta aquí...")
-            if pregunta:
-                st.session_state.historial_chat.append({"role": "user", "content": pregunta})
-                with st.chat_message("user"): st.write(pregunta)
-                
-                contexto = f"Datos del negocio:\n{analisis['df_agrupado'][['Product Name', 'Quantity', 'Sales', 'Ganancia_Neta', 'Precio_Medio']].to_string(index=False)}\n\nResponde de forma concisa y como experto a: {pregunta}"
-                
-                with st.chat_message("assistant"):
-                    with st.spinner("Analizando con Gemini 3.6 Flash..."):
-                        try:
-                            respuesta = model.generate_content(contexto)
-                            st.write(respuesta.text)
-                            st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
-                        except Exception as e: 
-                            st.error(f"Error de API: {e}")
-        else: 
-            st.info("⚠️ Configura la clave 'GEMINI_API_KEY' en los Secrets de Streamlit para activar el chat.")
+            with st.chat_message("assistant"):
+                with st.spinner("Analizando con Gemini 3.6 Flash..."):
+                    try:
+                        respuesta = model.generate_content(contexto)
+                        st.write(respuesta.text)
+                        st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
+                    except Exception as e: 
+                        st.error(f"Error de API: {e}")
+    else: 
+        st.info("⚠️ Configura la clave 'GEMINI_API_KEY' en los Secrets de Streamlit para activar el chat.")
 
 # ------------------------------------------------------------------------------
 # 4. PLANIFICADOR DE METAS (RESTAURADO Y MULTI-MES)
