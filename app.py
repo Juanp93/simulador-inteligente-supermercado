@@ -185,7 +185,7 @@ elif st.session_state.pantalla_actual == "express":
     st.subheader("💼 2. Estructura de Negocio y Egresos (Bimestral)")
     c1, c2, c3 = st.columns(3)
     with c1:
-        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60, help="Ideal para negocios mixtos. Ej: Un taller (reparación = servicio, repuestos = producto) o un spa. El porcentaje restante es inventario físico.")
+        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60, help="Ideal para negocios mixtos. El porcentaje restante es inventario físico.")
         margen_promedio = st.slider("Margen Neto Promedio (%)", 5, 90, 45)
     with c2:
         gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=2400000.0, help="Alquiler, servicios públicos, nómina base de las 8 semanas.")
@@ -245,9 +245,8 @@ elif st.session_state.pantalla_actual == "simulador":
         c1, c2 = st.columns(2)
         precio = c1.slider("1. Ajuste General de Precios (%)", -50, 50, 0)
         
-        # Pauta Publicitaria realista y editable
-        val_inicial = int(25 * m_factor) # Aprox 100,000 en COP
-        step_val = int(5 * m_factor)     # Aprox 20,000 en COP
+        val_inicial = int(25 * m_factor) 
+        step_val = int(5 * m_factor)     
         pauta = c2.number_input(f"2. Presupuesto Publicitario ({m_sufijo})", min_value=0, value=val_inicial, step=step_val, help="Ingresa manualmente el valor exacto de tu pauta o usa los botones para subir/bajar.")
         
         factor_precio = 1 + (precio / 100)
@@ -268,16 +267,31 @@ elif st.session_state.pantalla_actual == "simulador":
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
         
-        # Nueva Gráfica de Plataformas
+        # Distribución de Pauta Inteligente y Dinámica
         st.markdown("---")
-        st.subheader("📱 Distribución Sugerida de Pauta Publicitaria")
+        st.subheader("📱 Distribución Estratégica de Pauta")
         if pauta > 0:
-            dist_data = pd.DataFrame({
-                'Plataforma': ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads'],
-                'Asignación': [pauta * 0.55, pauta * 0.30, pauta * 0.15]
-            })
-            fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, 
-                               color_discrete_sequence=['#E1306C', '#4285F4', '#000000'])
+            pauta_usd = pauta / m_factor
+            
+            # Lógica inteligente según umbral de inversión
+            if pauta_usd < 40:  # Presupuesto Micro (Menos de ~160.000 COP)
+                plataformas = ['Meta (Instagram/Facebook)']
+                valores = [pauta]
+                colores = ['#E1306C']
+                st.info("💡 **Estrategia Micro-Presupuesto:** Se asigna el 100% a **Meta Ads (Instagram/FB)**. Con presupuestos reducidos, dividir la pauta en varias plataformas debilita el aprendizaje del algoritmo publicitario.")
+            elif pauta_usd < 150: # Presupuesto Medio (Hasta ~600.000 COP)
+                plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)']
+                valores = [pauta * 0.70, pauta * 0.30]
+                colores = ['#E1306C', '#4285F4']
+                st.info("💡 **Estrategia Multicanal Moderada:** 70% en **Meta** para atracción visual y generación de demanda + 30% en **Google Ads** para capturar clientes que buscan activamente tus productos/servicios.")
+            else: # Presupuesto Alto
+                plataformas = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads']
+                valores = [pauta * 0.50, pauta * 0.30, pauta * 0.20]
+                colores = ['#E1306C', '#4285F4', '#00F2FE'] # Cyan brillante para TikTok
+                st.info("💡 **Estrategia Integral Omnicanal:** Tu presupuesto permite cumplir los mínimos diarios de **TikTok Ads** (20%), capturando audiencia joven, junto a **Meta** (50%) y **Google** (30%).")
+                
+            dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
+            fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
             fig_pauta.update_traces(textinfo='percent+label')
             fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350)
             st.plotly_chart(fig_pauta, use_container_width=True)
@@ -318,7 +332,7 @@ elif st.session_state.pantalla_actual == "objetivos":
     t_prom_simulado = t_prom_base * (1 + (ajuste_tarifas/100))
     
     clientes_diarios = int(np.ceil(ventas_diarias_req / t_prom_simulado)) if t_prom_simulado > 0 else 0
-    alerta_capacidad = "metric-danger" if clientes_diarios > capacidad_max else "metric-warning"
+    alerta_capacidad = "metric-danger" if clientes_diarios > capacity_var if 'capacity_var' in locals() else capacidad_max else "metric-warning"
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
