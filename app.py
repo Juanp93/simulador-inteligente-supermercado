@@ -66,7 +66,6 @@ with st.sidebar:
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
-    # INTERRUPTOR REUBICADO PARA MAYOR VISIBILIDAD (Agrupado con la moneda)
     aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver (ej. El archivo está en Dólares, pero arriba seleccionaste COP).", value=False)
 
     st.markdown("---")
@@ -111,7 +110,7 @@ with st.sidebar:
                 except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (MULTIMONEDA)
+# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE
 # ==============================================================================
 df_final = pd.DataFrame()
 
@@ -134,7 +133,6 @@ if not st.session_state.df_bruto.empty:
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         if 'Customer Name' not in df_temp.columns: df_temp['Customer Name'] = "Mostrador"
         
-        # LOGICA DE CONVERSIÓN DE MONEDA APLICADA AQUÍ
         factor_multiplicador = m_factor if aplicar_conversion else 1.0
         
         df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * factor_multiplicador
@@ -276,29 +274,35 @@ elif st.session_state.pantalla_actual == "simulador":
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda.")
     else:
         st.markdown("### 1. Palancas Comerciales:")
-        c1, c2 = st.columns(2)
-        precio = c1.slider("Ajuste General de Precios (%)", -50, 50, 0)
+        c1, c2, c3, c4 = st.columns(4)
+        
+        precio = c1.slider("Ajuste de Precios (%)", -50, 50, 0)
         
         val_inicial = int(25 * m_factor) 
         step_val = int(5 * m_factor)     
-        pauta = c2.number_input(f"Presupuesto Publicitario Total ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
+        pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
+        
+        costo_lead = c3.number_input(f"Costo por Lead ({m_sufijo})", min_value=0.1, value=6000.0 if m_sufijo == " COP" else 1.5, help="Costo promedio de llevar a un cliente potencial a preguntar o visitar.")
+        
+        tasa_conversion = c4.slider("Tasa de Conversión (%)", 1.0, 100.0, 5.0, 0.5, help="Porcentaje realista de personas que terminan comprando. Un 3% a 5% es el estándar en retail.")
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
         
-        costo_lead = 1.5 * m_factor 
-        cl_n = int(pauta / costo_lead) if costo_lead > 0 else 0
+        # LA NUEVA MATEMÁTICA REALISTA
+        leads_generados = int(pauta / costo_lead) if costo_lead > 0 else 0
+        clientes_reales = int(leads_generados * (tasa_conversion / 100))
         
         precio_m = df_final['Sales'].sum() / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0
         costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
         
-        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + (cl_n * precio_m * factor_precio)
-        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + (cl_n * precio_m * costo_promedio_porcentaje)
+        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + (clientes_reales * precio_m * factor_precio)
+        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + (clientes_reales * precio_m * costo_promedio_porcentaje)
         g_sim = v_sim - c_sim - pauta
         
         fig = go.Figure(data=[
             go.Bar(name='Actual', x=['Ventas Totales', 'Ganancia Neta'], y=[df_final['Sales'].sum(), df_final['Ganancia_Neta'].sum()], marker_color='#636EFA', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
-            go.Bar(name='Proyectado', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
+            go.Bar(name='Proyectado (Realista)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
         ])
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
