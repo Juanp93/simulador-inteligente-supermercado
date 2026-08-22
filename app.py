@@ -61,17 +61,17 @@ with st.sidebar:
     if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
     
     st.markdown("---")
-    selector_moneda = st.selectbox("💱 Divisa a mostrar en pantalla:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
+    selector_moneda = st.selectbox("💱 Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
+    # INTERRUPTOR REUBICADO PARA MAYOR VISIBILIDAD (Agrupado con la moneda)
+    aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver (ej. El archivo está en Dólares, pero arriba seleccionaste COP).", value=False)
+
     st.markdown("---")
     st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     archivo = st.file_uploader("📁 Sube tus ventas:", type=['csv', 'xlsx'])
-    
-    # NUEVO: INTERRUPTOR DE CONVERSIÓN
-    aplicar_conversion = st.checkbox("🔄 Convertir moneda del archivo", help="Marca esta casilla SOLO si tu Excel está en una moneda diferente (ej. Dólares) y quieres que la plataforma lo convierta automáticamente a la divisa seleccionada arriba.", value=False)
     
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
@@ -134,7 +134,7 @@ if not st.session_state.df_bruto.empty:
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         if 'Customer Name' not in df_temp.columns: df_temp['Customer Name'] = "Mostrador"
         
-        # LOGICA DE CONVERSIÓN DE MONEDA
+        # LOGICA DE CONVERSIÓN DE MONEDA APLICADA AQUÍ
         factor_multiplicador = m_factor if aplicar_conversion else 1.0
         
         df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * factor_multiplicador
