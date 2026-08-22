@@ -29,7 +29,7 @@ def cambiar_pantalla(nombre): st.session_state.pantalla_actual = nombre
 def generar_plantilla_excel():
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        pd.DataFrame({'Fecha': ['01/10/2026', '02/10/2026'], 'Producto': ['Producto A', 'Producto B'], 'Ventas': [100, 250], 'Cantidad': [2, 5], 'Cliente': ['Mostrador', 'VIP']}).to_excel(writer, index=False)
+        pd.DataFrame({'Fecha': ['01/10/2026', '02/10/2026'], 'Producto': ['Producto A', 'Producto B'], 'Ventas': [100000, 250000], 'Cantidad': [2, 5], 'Cliente': ['Mostrador', 'VIP']}).to_excel(writer, index=False)
     return output.getvalue()
 
 st.markdown("""
@@ -61,7 +61,7 @@ with st.sidebar:
     if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
     
     st.markdown("---")
-    selector_moneda = st.selectbox("💱 Divisa:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
+    selector_moneda = st.selectbox("💱 Divisa a mostrar en pantalla:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
@@ -69,6 +69,9 @@ with st.sidebar:
     st.markdown("---")
     st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     archivo = st.file_uploader("📁 Sube tus ventas:", type=['csv', 'xlsx'])
+    
+    # NUEVO: INTERRUPTOR DE CONVERSIÓN
+    aplicar_conversion = st.checkbox("🔄 Convertir moneda del archivo", help="Marca esta casilla SOLO si tu Excel está en una moneda diferente (ej. Dólares) y quieres que la plataforma lo convierta automáticamente a la divisa seleccionada arriba.", value=False)
     
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
@@ -108,7 +111,7 @@ with st.sidebar:
                 except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO
+# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (MULTIMONEDA)
 # ==============================================================================
 df_final = pd.DataFrame()
 
@@ -131,7 +134,10 @@ if not st.session_state.df_bruto.empty:
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         if 'Customer Name' not in df_temp.columns: df_temp['Customer Name'] = "Mostrador"
         
-        df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * m_factor
+        # LOGICA DE CONVERSIÓN DE MONEDA
+        factor_multiplicador = m_factor if aplicar_conversion else 1.0
+        
+        df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * factor_multiplicador
         df_temp['Quantity'] = pd.to_numeric(df_temp['Quantity'], errors='coerce').fillna(1)
         
         productos_unicos = df_temp['Product Name'].unique()
@@ -212,8 +218,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.markdown("💡 **¿Qué significa esto?** Es el porcentaje del precio de venta que te cuesta adquirir o fabricar el producto. Si vendes algo en $100 y te costó $70 al proveedor, tu costo es del 70%.")
         
         c_sl, c_btn = st.columns([3, 1])
-        with c_sl:
-            nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0, help="Usa este slider y presiona 'Aplicar' para reescribir toda la tabla de abajo de forma masiva.")
+        with c_sl: nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0)
         with c_btn:
             st.write("") 
             st.write("")
@@ -223,16 +228,12 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
         st.markdown("Edita individualmente usando las celdas de la tabla (Soporta navegación rápida con teclado):")
         st.session_state.costos_editados = st.data_editor(
-            st.session_state.costos_editados, 
-            hide_index=True, 
-            use_container_width=True,
-            column_config={
-                "Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")
-            }
+            st.session_state.costos_editados, hide_index=True, use_container_width=True,
+            column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
         )
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
-        ticket_promedio = df_final['Sales'].sum() / len(df_final)
+        ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
         
         st.markdown("---")
         st.subheader("🏆 2. Métricas Clave (Análisis Humano)")
@@ -252,13 +253,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
         st.markdown("---")
         st.subheader("📊 4. Análisis Profundo del Negocio")
-        tipo_analisis = st.radio(
-            "Selecciona la métrica que deseas visualizar en la gráfica de barras:",
-            ["📦 Top 10 Productos (Por Unidades Vendidas)", 
-             "💰 Top 10 Productos (Por Ingreso Bruto)", 
-             "👥 Top 10 Clientes (Por Facturación)"],
-            horizontal=True
-        )
+        tipo_analisis = st.radio("Selecciona la métrica:", ["📦 Top 10 Productos (Por Unidades Vendidas)", "💰 Top 10 Productos (Por Ingreso Bruto)", "👥 Top 10 Clientes (Por Facturación)"], horizontal=True)
 
         if "Clientes" in tipo_analisis:
             data_plot = df_final.groupby('Customer Name')['Sales'].sum().reset_index().sort_values('Sales', ascending=False).head(10)
@@ -290,13 +285,15 @@ elif st.session_state.pantalla_actual == "simulador":
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
-        cl_n = int(pauta / (5000 * m_factor)) if m_factor > 0 else 0
         
-        precio_m = df_final['Sales'].mean() / df_final['Quantity'].mean()
+        costo_lead = 1.5 * m_factor 
+        cl_n = int(pauta / costo_lead) if costo_lead > 0 else 0
+        
+        precio_m = df_final['Sales'].sum() / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0
         costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
         
-        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + ((cl_n * 1.5) * precio_m * factor_precio)
-        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + ((cl_n * 1.5) * precio_m * costo_promedio_porcentaje)
+        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + (cl_n * precio_m * factor_precio)
+        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + (cl_n * precio_m * costo_promedio_porcentaje)
         g_sim = v_sim - c_sim - pauta
         
         fig = go.Figure(data=[
@@ -330,8 +327,6 @@ elif st.session_state.pantalla_actual == "simulador":
 
         st.markdown("---")
         st.subheader("🤖 3. Suite IA de Creación de Campañas")
-        st.markdown("Deja que la IA redacte los anuncios para ti basados en el tono de tu empresa.")
-        
         col_m1, col_m2 = st.columns(2)
         with col_m1: prod_promo = st.text_input("¿Qué vas a promocionar?")
         with col_m2: tono_marca = st.selectbox("Tono de comunicación:", ["Comercial y Directo", "Divertido y Cercano", "Urgente (Oferta)", "Elegante y Premium"])
