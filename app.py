@@ -282,16 +282,19 @@ elif st.session_state.pantalla_actual == "simulador":
         step_val = int(5 * m_factor)     
         pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
         
-        costo_lead = c3.number_input(f"Costo por Lead ({m_sufijo})", min_value=0.1, value=6000.0 if m_sufijo == " COP" else 1.5, help="Costo promedio de llevar a un cliente potencial a preguntar o visitar.")
+        # NUEVAS ETIQUETAS Y TEXTOS DE AYUDA AMIGABLES
+        costo_lead = c3.number_input(f"Costo por Mensaje/Contacto ({m_sufijo})", min_value=0.1, value=2000.0 if m_sufijo == " COP" else 0.5, help="¿Cuánto estimas que te cuesta hacer que un cliente nuevo te escriba al WhatsApp o pregunte por un producto?")
         
-        tasa_conversion = c4.slider("Tasa de Conversión (%)", 1.0, 100.0, 5.0, 0.5, help="Porcentaje realista de personas que terminan comprando. Un 3% a 5% es el estándar en retail.")
+        tasa_conversion = c4.slider("% de Cierre de Ventas", 1.0, 100.0, 5.0, 0.5, help="De cada 100 personas que te preguntan, ¿cuántas terminan comprando realmente?")
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
         
-        # LA NUEVA MATEMÁTICA REALISTA
         leads_generados = int(pauta / costo_lead) if costo_lead > 0 else 0
         clientes_reales = int(leads_generados * (tasa_conversion / 100))
+        
+        # EL TRADUCTOR AUTOMÁTICO (Responsable y Neutral)
+        st.info(f"💡 **Proyección de Campaña:** Con este presupuesto, es **posible** que atraigas aproximadamente **{leads_generados} mensajes o contactos potenciales**. Si mantienes un nivel de cierre de ventas del {tasa_conversion}%, **podrías** conseguir **{clientes_reales} clientes nuevos**. *Ten en cuenta que estos son valores estimados: tus resultados reales dependerán en gran medida de qué tan atractiva sea la imagen de tu campaña y de la rapidez y calidad con la que atiendas cada mensaje.*")
         
         precio_m = df_final['Sales'].sum() / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0
         costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
