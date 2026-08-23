@@ -153,7 +153,7 @@ with st.sidebar:
                 st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE
+# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL)
 # ==============================================================================
 df_final = pd.DataFrame()
 
@@ -173,13 +173,9 @@ if not st.session_state.df_bruto.empty:
     df_temp = df_temp.rename(columns=col_map)
     df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()] 
     
-    # 🛡️ FILTRO INTELIGENTE ANTI-TOTALES (Actualizado)
     if 'Product Name' in df_temp.columns:
-        # Reemplazar celdas con espacios vacíos por nulos reales
         df_temp['Product Name'] = df_temp['Product Name'].replace(r'^\s*$', np.nan, regex=True)
-        # Eliminar silenciosamente filas donde el producto está vacío (Ej. Fila de Totales)
         df_temp = df_temp.dropna(subset=['Product Name'])
-        # Eliminar si explícitamente dice 'total'
         filtro_totales = df_temp['Product Name'].astype(str).str.lower().str.contains('total', na=False)
         df_temp = df_temp[~filtro_totales]
     
@@ -280,10 +276,18 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 st.rerun()
 
         st.markdown("Edita individualmente usando las celdas de la tabla:")
-        st.session_state.costos_editados = st.data_editor(
+        # SOLUCIÓN BUG 2 (RECÁLCULO EN VIVO): Capturamos tu edición manual al instante
+        costos_actualizados = st.data_editor(
             st.session_state.costos_editados, hide_index=True, use_container_width=True,
             column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
         )
+        
+        # Si cambiaste un número, el sistema actualiza su matemática AHORA MISMO, antes de pintar gráficas
+        if not costos_actualizados.equals(st.session_state.costos_editados):
+            st.session_state.costos_editados = costos_actualizados
+            df_final = pd.merge(df_temp, st.session_state.costos_editados, on='Product Name', how='left')
+            df_final['Costo_Valor'] = df_final['Sales'] * (df_final['Costo (%)'] / 100)
+            df_final['Ganancia_Neta'] = df_final['Sales'] - df_final['Costo_Valor']
         
         st.markdown("💾 **Guarda o Recupera tu configuración de costos:**")
         col_m1, col_m2 = st.columns(2)
@@ -293,18 +297,18 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
-                try:
-                    df_cargado = pd.read_csv(archivo_costos)
-                    if 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
-                        if not df_cargado.equals(st.session_state.costos_editados):
+                # SOLUCIÓN BUG 1 (LA GUERRA CIVIL): Botón de seguridad para evitar titileos
+                if st.button("♻️ Aplicar Costos de este Archivo", use_container_width=True):
+                    try:
+                        df_cargado = pd.read_csv(archivo_costos)
+                        if 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
                             st.session_state.costos_editados = df_cargado
-                            st.rerun() # Refresco controlado y silencioso
-                        else:
                             st.success("✅ ¡Costos restaurados exitosamente!")
-                    else:
-                        st.error("❌ El archivo no tiene las columnas correctas.")
-                except Exception as e:
-                    st.error("❌ Archivo no válido o corrupto.")
+                            st.rerun() 
+                        else:
+                            st.error("❌ El archivo no tiene las columnas correctas.")
+                    except Exception as e:
+                        st.error("❌ Archivo no válido o corrupto.")
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
