@@ -32,7 +32,7 @@ def generar_plantilla_excel():
         pd.DataFrame({'Fecha': ['01/10/2026', '02/10/2026'], 'Producto': ['Producto A', 'Producto B'], 'Ventas': [100000, 250000], 'Cantidad': [2, 5], 'Cliente': ['Mostrador', 'VIP']}).to_excel(writer, index=False)
     return output.getvalue()
 
-# NUEVO MOTOR DE EXPORTACIÓN (FASE 1)
+# MOTOR DE EXPORTACIÓN (FASE 1)
 @st.cache_data
 def df_to_excel(df):
     output = io.BytesIO()
@@ -63,7 +63,7 @@ def stream_gemini(respuesta):
         if chunk.text: yield chunk.text
 
 # ==============================================================================
-# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO (INTACTO)
+# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO
 # ==============================================================================
 with st.sidebar:
     st.title("🧭 Navegación")
@@ -276,9 +276,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
-        # ======================================================================
-        # NUEVA SECCIÓN FASE 1: CONSULTOR IA Y EXPORTACIÓN
-        # ======================================================================
         st.markdown("---")
         col_export, col_ia = st.columns(2)
         
@@ -335,9 +332,9 @@ elif st.session_state.pantalla_actual == "simulador":
         
         precio = c1.slider("Ajuste de Precios (%)", -50, 50, 0)
         
-        val_inicial = int(25 * m_factor) 
+        # EL AJUSTE QUIRÚRGICO DE LA REGLA DE ORO ESTÁ AQUÍ (value = 0)
         step_val = int(5 * m_factor)     
-        pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
+        pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=0, step=step_val)
         
         costo_lead = c3.number_input(f"Costo por Mensaje/Contacto ({m_sufijo})", min_value=0.1, value=2000.0 if m_sufijo == " COP" else 0.5, help="¿Cuánto estimas que te cuesta hacer que un cliente nuevo te escriba al WhatsApp o pregunte por un producto?")
         
@@ -365,7 +362,6 @@ elif st.session_state.pantalla_actual == "simulador":
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
 
-        # NUEVA FUNCIÓN FASE 1: EXPORTACIÓN DEL ESCENARIO SIMULADO
         df_sim_export = pd.DataFrame({
             "Métrica Financiera": ["Ventas Totales", "Costo de Inventario (Estimado)", "Inversión en Publicidad", "Ganancia Neta Libre"],
             "Escenario Actual (Realidad)": [df_final['Sales'].sum(), (df_final['Sales'] * costo_promedio_porcentaje).sum(), 0, df_final['Ganancia_Neta'].sum()],
