@@ -107,10 +107,9 @@ with st.sidebar:
     
     with st.expander("⚠️ Requisitos del archivo", expanded=True):
         st.markdown("""
-        1. **Números puros:** No escribas letras ni signos de moneda en las ventas (Ej: escribe *150000*, no *$150.000*).
-        2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*, *Cantidad*).
-        3. **Sin Totales:** Sube la base de datos cruda. Elimina filas de "Totales" al final.
-        4. **Tamaño:** Procura subir archivos de menos de 50MB.
+        1. **Números puros:** No escribas letras ni signos de moneda en las ventas.
+        2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*).
+        3. **Sin Totales:** Sube la base de datos cruda.
         """)
 
     archivo = st.file_uploader("Sube tus ventas aquí (.csv o .xlsx):", type=['csv', 'xlsx'])
@@ -150,7 +149,8 @@ with st.sidebar:
                 texto_completo = st.write_stream(stream_gemini(respuesta))
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
-            except Exception as e: st.error("Error de conexión.")
+            except Exception as e: 
+                st.error("Error de conexión.")
 
 # ==============================================================================
 # 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE
@@ -160,7 +160,6 @@ df_final = pd.DataFrame()
 if not st.session_state.df_bruto.empty:
     df_temp = st.session_state.df_bruto.copy()
     
-    # Limpieza básica de filas completamente vacías
     df_temp = df_temp.dropna(how='all')
     
     col_map = {}
@@ -174,8 +173,13 @@ if not st.session_state.df_bruto.empty:
     df_temp = df_temp.rename(columns=col_map)
     df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()] 
     
-    # FILTRO INTELIGENTE ANTI-TOTALES
+    # 🛡️ FILTRO INTELIGENTE ANTI-TOTALES (Actualizado)
     if 'Product Name' in df_temp.columns:
+        # Reemplazar celdas con espacios vacíos por nulos reales
+        df_temp['Product Name'] = df_temp['Product Name'].replace(r'^\s*$', np.nan, regex=True)
+        # Eliminar silenciosamente filas donde el producto está vacío (Ej. Fila de Totales)
+        df_temp = df_temp.dropna(subset=['Product Name'])
+        # Eliminar si explícitamente dice 'total'
         filtro_totales = df_temp['Product Name'].astype(str).str.lower().str.contains('total', na=False)
         df_temp = df_temp[~filtro_totales]
     
@@ -289,19 +293,18 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
-                df_cargado = None
                 try:
                     df_cargado = pd.read_csv(archivo_costos)
-                except:
-                    st.error("❌ Archivo de costos no válido o corrupto.")
-                
-                # REPARACIÓN BUG FANTASMA: Aplicamos costos y refrescamos sin infinito
-                if df_cargado is not None and 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
-                    if not df_cargado.equals(st.session_state.costos_editados):
-                        st.session_state.costos_editados = df_cargado
-                        st.rerun()
+                    if 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
+                        if not df_cargado.equals(st.session_state.costos_editados):
+                            st.session_state.costos_editados = df_cargado
+                            st.rerun() # Refresco controlado y silencioso
+                        else:
+                            st.success("✅ ¡Costos restaurados exitosamente!")
                     else:
-                        st.success("✅ ¡Costos restaurados exitosamente!")
+                        st.error("❌ El archivo no tiene las columnas correctas.")
+                except Exception as e:
+                    st.error("❌ Archivo no válido o corrupto.")
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
@@ -354,10 +357,10 @@ elif st.session_state.pantalla_actual == "diagnostico":
                         st.markdown("#### 💡 Nueva Estrategia Sugerida:")
                         texto_estrategia = st.write_stream(stream_gemini(res_analisis))
                         st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
-                        st.rerun() # Para forzar que se muestre en el panel de historial inmediatamente
-                    except: st.error("Error contactando a la IA.")
+                        st.rerun() 
+                    except Exception as e: 
+                        st.error("Error contactando a la IA.")
             
-            # REPARACIÓN BUG AMNESIA: Muestra la libreta de apuntes visualmente siempre
             if st.session_state.apuntes_ia != "":
                 st.write("")
                 with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
@@ -549,9 +552,9 @@ elif st.session_state.pantalla_actual == "simulador":
                     texto_campana = st.write_stream(stream_gemini(res_mkt))
                     st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
                     st.rerun()
-                except: st.error("Error contactando a la IA.")
+                except Exception as e: 
+                    st.error("Error contactando a la IA.")
         
-        # HISTORIAL VISUAL EN EL SIMULADOR TAMBIÉN
         if st.session_state.apuntes_ia != "":
             st.write("")
             with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
