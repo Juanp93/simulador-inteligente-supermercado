@@ -49,6 +49,11 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
+# Generador para el efecto máquina de escribir
+def stream_gemini(respuesta):
+    for chunk in respuesta:
+        if chunk.text: yield chunk.text
+
 # ==============================================================================
 # 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO
 # ==============================================================================
@@ -66,7 +71,7 @@ with st.sidebar:
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
-    aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver (ej. El archivo está en Dólares, pero arriba seleccionaste COP).", value=False)
+    aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver.", value=False)
 
     st.markdown("---")
     st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
@@ -98,16 +103,16 @@ with st.sidebar:
         Eres el Asesor IA de IntelRetail Pro. 
         Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
         Datos: {resumen_datos}
-        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos y adapta tus recomendaciones de marketing y ventas específicamente a ese sector.
+        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos y adapta tus recomendaciones de marketing y ventas.
         Responde breve y muy práctico a: {pregunta}
         """
         with chat_container.chat_message("assistant"):
-            with st.spinner("Pensando..."):
-                try:
-                    respuesta = modelo_ia.generate_content(prompt_experto)
-                    st.write(respuesta.text)
-                    st.session_state.historial_chat.append({"role": "assistant", "content": respuesta.text})
-                except Exception as e: st.error("Error de conexión.")
+            try:
+                # AQUÍ ESTÁ LA VELOCIDAD: Se activa el stream para escribir en vivo
+                respuesta = modelo_ia.generate_content(prompt_experto, stream=True)
+                texto_completo = st.write_stream(stream_gemini(respuesta))
+                st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
+            except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
 # 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE
@@ -232,9 +237,20 @@ elif st.session_state.pantalla_actual == "diagnostico":
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
+        ventas_totales_global = df_final['Sales'].sum()
+        ganancia_neta_global = df_final['Ganancia_Neta'].sum()
         
         st.markdown("---")
         st.subheader("🏆 2. Métricas Clave (Análisis Humano)")
+        
+        # EL NUEVO TABLERO EJECUTIVO SUPERIOR
+        c_top1, c_top2 = st.columns(2)
+        with c_top1:
+            st.markdown(f'<div class="metric-container"><div class="metric-title">VENTAS TOTALES REGISTRADAS</div><div class="metric-value">{m_simbolo}{ventas_totales_global:,.2f}</div><div class="metric-caption">Suma total de todos los ingresos en tu base de datos.</div></div>', unsafe_allow_html=True)
+        with c_top2:
+            st.markdown(f'<div class="metric-container {"metric-success" if ganancia_neta_global > 0 else "metric-danger"}"><div class="metric-title">GANANCIA NETA TOTAL</div><div class="metric-value">{m_simbolo}{ganancia_neta_global:,.2f}</div><div class="metric-caption">Dinero libre después de descontar el costo de proveedores/producción.</div></div>', unsafe_allow_html=True)
+
+        # LAS MÉTRICAS DETALLADAS DE CATÁLOGO
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
@@ -282,7 +298,6 @@ elif st.session_state.pantalla_actual == "simulador":
         step_val = int(5 * m_factor)     
         pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=val_inicial, step=step_val)
         
-        # NUEVAS ETIQUETAS Y TEXTOS DE AYUDA AMIGABLES
         costo_lead = c3.number_input(f"Costo por Mensaje/Contacto ({m_sufijo})", min_value=0.1, value=2000.0 if m_sufijo == " COP" else 0.5, help="¿Cuánto estimas que te cuesta hacer que un cliente nuevo te escriba al WhatsApp o pregunte por un producto?")
         
         tasa_conversion = c4.slider("% de Cierre de Ventas", 1.0, 100.0, 5.0, 0.5, help="De cada 100 personas que te preguntan, ¿cuántas terminan comprando realmente?")
@@ -293,7 +308,6 @@ elif st.session_state.pantalla_actual == "simulador":
         leads_generados = int(pauta / costo_lead) if costo_lead > 0 else 0
         clientes_reales = int(leads_generados * (tasa_conversion / 100))
         
-        # EL TRADUCTOR AUTOMÁTICO (Responsable y Neutral)
         st.info(f"💡 **Proyección de Campaña:** Con este presupuesto, es **posible** que atraigas aproximadamente **{leads_generados} mensajes o contactos potenciales**. Si mantienes un nivel de cierre de ventas del {tasa_conversion}%, **podrías** conseguir **{clientes_reales} clientes nuevos**. *Ten en cuenta que estos son valores estimados: tus resultados reales dependerán en gran medida de qué tan atractiva sea la imagen de tu campaña y de la rapidez y calidad con la que atiendas cada mensaje.*")
         
         precio_m = df_final['Sales'].sum() / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0
@@ -343,11 +357,12 @@ elif st.session_state.pantalla_actual == "simulador":
             elif not prod_promo: st.warning("⚠️ Escribe el producto a promocionar.")
             else:
                 prompt_marketing = f"Eres un Copywriter experto. Crea una campaña para '{prod_promo}' con tono '{tono_marca}'. Entrega: 1) Copy para Meta con emojis y CTA. 2) 3 Títulos cortos para Google Ads. 3) 1 Idea de diseño visual/arte."
-                with st.spinner("Creando magia... 🪄"):
-                    try:
-                        res_mkt = modelo_ia.generate_content(prompt_marketing)
-                        st.markdown(f"<div style='background-color: #1a1c24; padding: 20px; border-radius: 10px; border-left: 5px solid #00F2FE;'>{res_mkt.text}</div>", unsafe_allow_html=True)
-                    except: st.error("Error contactando a la IA.")
+                # AQUÍ ESTÁ LA VELOCIDAD: Se activa el stream para la creación de campañas
+                st.markdown("### 💡 Tu Campaña Generada:")
+                try:
+                    res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
+                    st.write_stream(stream_gemini(res_mkt))
+                except: st.error("Error contactando a la IA.")
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
