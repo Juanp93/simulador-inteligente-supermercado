@@ -16,6 +16,8 @@ if "historial_chat" not in st.session_state: st.session_state.historial_chat = [
 if "df_bruto" not in st.session_state: st.session_state.df_bruto = pd.DataFrame()
 if "costos_editados" not in st.session_state: st.session_state.costos_editados = pd.DataFrame()
 if "escenario_a" not in st.session_state: st.session_state.escenario_a = None
+# NUEVA MEMORIA: La "Libreta de Apuntes" para el informe de texto
+if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
@@ -39,6 +41,26 @@ def df_to_excel(df):
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
         df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
     return output.getvalue()
+
+# NUEVO MOTOR: Generador del Informe de Texto Narrativo
+def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia):
+    contenido = f"""====================================================
+INFORME EJECUTIVO - INTELRETAIL PRO
+====================================================
+
+💰 RESUMEN FINANCIERO GLOBAL:
+- Ventas Totales Registradas: {simbolo}{ventas_tot:,.2f}
+- Ganancia Neta Libre Estimada: {simbolo}{ganancia_tot:,.2f}
+
+----------------------------------------------------
+🧠 APUNTES Y ESTRATEGIAS DE INTELIGENCIA ARTIFICIAL:
+----------------------------------------------------
+{notas_ia if notas_ia != "" else "Aún no has generado estrategias con la IA en esta sesión."}
+
+====================================================
+Generado automáticamente por tu copiloto IntelRetail Pro.
+"""
+    return contenido.encode('utf-8')
 
 st.markdown("""
 <style>
@@ -128,6 +150,8 @@ with st.sidebar:
                 respuesta = modelo_ia.generate_content(prompt_experto, stream=True)
                 texto_completo = st.write_stream(stream_gemini(respuesta))
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
+                # Guardamos la asesoría en la libreta
+                st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: st.error("Error de conexión.")
 
 # ==============================================================================
@@ -263,7 +287,9 @@ elif st.session_state.pantalla_actual == "diagnostico":
                     df_cargado = pd.read_csv(archivo_costos)
                     if 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
                         st.session_state.costos_editados = df_cargado
-                        st.success("✅ ¡Costos restaurados! Presiona F5 o recarga la página para aplicar los cambios.")
+                        st.success("✅ ¡Costos restaurados!")
+                        # SOLUCIÓN DEL BUG F5: Obliga a Streamlit a actualizar la pantalla instantáneamente
+                        st.rerun()
                 except:
                     st.error("Archivo no válido.")
         
@@ -296,8 +322,12 @@ elif st.session_state.pantalla_actual == "diagnostico":
         
         with col_export:
             st.subheader("💾 Exportar Datos")
-            st.markdown("Descarga tu base de datos completa incluyendo las columnas de costos reales y ganancia neta calculadas por el sistema. Ideal para reuniones directivas.")
-            st.download_button(label="📥 Descargar Auditoría (Excel)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
+            st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
+            st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
+            
+            # EL NUEVO BOTÓN DEL INFORME TEXTUAL
+            txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia)
+            st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
         with col_ia:
             st.subheader("🧠 Consultor IA Ejecutivo")
@@ -309,7 +339,9 @@ elif st.session_state.pantalla_actual == "diagnostico":
                     st.markdown("#### 💡 Estrategia Sugerida:")
                     try:
                         res_analisis = modelo_ia.generate_content(prompt_analisis, stream=True)
-                        st.write_stream(stream_gemini(res_analisis))
+                        texto_estrategia = st.write_stream(stream_gemini(res_analisis))
+                        # GUARDAMOS LA RESPUESTA EN LA LIBRETA DE APUNTES
+                        st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
                     except: st.error("Error contactando a la IA.")
         
         st.markdown("---")
@@ -362,7 +394,6 @@ elif st.session_state.pantalla_actual == "simulador":
         
         st.info(f"💡 **Proyección de Campaña:** Con este presupuesto, es **posible** que atraigas aproximadamente **{leads_generados} mensajes o contactos potenciales**. Si mantienes un nivel de cierre de ventas del {tasa_conversion}%, **podrías** conseguir **{clientes_reales} clientes nuevos**.")
         
-        # PARCHE DE SEGURIDAD ANTIFUGAS: Si el costo global es 0 o está vacío, asume 70% por defecto
         if st.session_state.costos_editados.empty:
             costo_promedio_porcentaje = 0.70
         else:
@@ -370,7 +401,6 @@ elif st.session_state.pantalla_actual == "simulador":
             if pd.isna(costo_promedio_porcentaje): 
                 costo_promedio_porcentaje = 0.70
 
-        # Base Financiera
         ventas_actuales_tot = df_final['Sales'].sum()
         costo_actual_tot = (df_final['Sales'] * costo_promedio_porcentaje).sum()
         ganancia_actual_tot = df_final['Ganancia_Neta'].sum()
@@ -383,7 +413,6 @@ elif st.session_state.pantalla_actual == "simulador":
         col_esc1, col_esc2 = st.columns(2)
         with col_esc1:
             if st.button("💾 Guardar como Escenario A", use_container_width=True):
-                # LA "FOTOGRAFÍA" DEL ESCENARIO A (Parámetros + Resultados)
                 st.session_state.escenario_a = {
                     'Ajuste_Precios': precio,
                     'Pauta': pauta,
@@ -413,9 +442,6 @@ elif st.session_state.pantalla_actual == "simulador":
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
 
-        # ======================================================================
-        # NUEVA CONSTRUCCIÓN DEL EXCEL GERENCIAL (2 BLOQUES DE DATOS)
-        # ======================================================================
         export_data = {
             "Métrica / Parámetro": [
                 "[ PARÁMETROS ESTRATÉGICOS ]",
@@ -501,7 +527,9 @@ elif st.session_state.pantalla_actual == "simulador":
                 st.markdown("### 💡 Tu Campaña Generada:")
                 try:
                     res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
-                    st.write_stream(stream_gemini(res_mkt))
+                    texto_campana = st.write_stream(stream_gemini(res_mkt))
+                    # GUARDAMOS LA CAMPAÑA EN LA LIBRETA
+                    st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
                 except: st.error("Error contactando a la IA.")
 
 elif st.session_state.pantalla_actual == "objetivos":
