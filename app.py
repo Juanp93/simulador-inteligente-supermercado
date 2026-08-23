@@ -15,7 +15,6 @@ if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual =
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
 if "df_bruto" not in st.session_state: st.session_state.df_bruto = pd.DataFrame()
 if "costos_editados" not in st.session_state: st.session_state.costos_editados = pd.DataFrame()
-# NUEVA MEMORIA: Para guardar el Escenario A en el simulador
 if "escenario_a" not in st.session_state: st.session_state.escenario_a = None
 
 try:
@@ -252,9 +251,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
             column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
         )
         
-        # ======================================================================
-        # NUEVA FUNCIÓN FASE 2: MEMORIA DE COSTOS
-        # ======================================================================
         st.markdown("💾 **Guarda o Recupera tu configuración de costos:**")
         col_m1, col_m2 = st.columns(2)
         with col_m1:
@@ -366,35 +362,50 @@ elif st.session_state.pantalla_actual == "simulador":
         
         st.info(f"💡 **Proyección de Campaña:** Con este presupuesto, es **posible** que atraigas aproximadamente **{leads_generados} mensajes o contactos potenciales**. Si mantienes un nivel de cierre de ventas del {tasa_conversion}%, **podrías** conseguir **{clientes_reales} clientes nuevos**.")
         
-        precio_m = df_final['Sales'].sum() / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0
-        costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
-        
-        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + (clientes_reales * precio_m * factor_precio)
-        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + (clientes_reales * precio_m * costo_promedio_porcentaje)
+        # PARCHE DE SEGURIDAD ANTIFUGAS: Si el costo global es 0 o está vacío, asume 70% por defecto
+        if st.session_state.costos_editados.empty:
+            costo_promedio_porcentaje = 0.70
+        else:
+            costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
+            if pd.isna(costo_promedio_porcentaje): 
+                costo_promedio_porcentaje = 0.70
+
+        # Base Financiera
+        ventas_actuales_tot = df_final['Sales'].sum()
+        costo_actual_tot = (df_final['Sales'] * costo_promedio_porcentaje).sum()
+        ganancia_actual_tot = df_final['Ganancia_Neta'].sum()
+
+        v_sim = (df_final['Sales'] * factor_precio * factor_cantidad).sum() + (clientes_reales * (ventas_actuales_tot / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0) * factor_precio)
+        c_sim = (df_final['Sales'] * costo_promedio_porcentaje * factor_cantidad).sum() + (clientes_reales * (ventas_actuales_tot / df_final['Quantity'].sum() if df_final['Quantity'].sum() > 0 else 0) * costo_promedio_porcentaje)
         g_sim = v_sim - c_sim - pauta
         
-        # ======================================================================
-        # NUEVA FUNCIÓN FASE 2: COMPARADOR DE ESCENARIOS
-        # ======================================================================
         st.markdown("### ⚖️ Comparador de Escenarios Estratégicos")
         col_esc1, col_esc2 = st.columns(2)
         with col_esc1:
             if st.button("💾 Guardar como Escenario A", use_container_width=True):
-                st.session_state.escenario_a = {'Ventas': v_sim, 'Ganancia': g_sim, 'Nombre': f"Plan A"}
-                st.success("✅ ¡Escenario A guardado! Ahora mueve las palancas para armar tu Plan B y compáralos en la gráfica.")
+                # LA "FOTOGRAFÍA" DEL ESCENARIO A (Parámetros + Resultados)
+                st.session_state.escenario_a = {
+                    'Ajuste_Precios': precio,
+                    'Pauta': pauta,
+                    'Costo_Lead': costo_lead,
+                    'Conversion': tasa_conversion,
+                    'Clientes_Nuevos': clientes_reales,
+                    'Ventas': v_sim,
+                    'Costo_Inv': c_sim,
+                    'Ganancia': g_sim
+                }
+                st.success("✅ ¡Escenario A guardado! Ahora mueve las palancas para armar tu Plan B y compáralos en la gráfica y en el Excel.")
         with col_esc2:
             if st.session_state.escenario_a is not None:
                 if st.button("🗑️ Borrar Escenario A", use_container_width=True):
                     st.session_state.escenario_a = None
                     st.rerun()
 
-        # CONSTRUCCIÓN DE LA GRÁFICA MULTI-BARRA
         barras_grafica = [
-            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[df_final['Sales'].sum(), df_final['Ganancia_Neta'].sum()], marker_color='#636EFA', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
+            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[ventas_actuales_tot, ganancia_actual_tot], marker_color='#636EFA', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
             go.Bar(name='Escenario Vivo (Proyección)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
         ]
         
-        # Si existe el escenario A, se inserta en medio de la gráfica
         if st.session_state.escenario_a is not None:
             barras_grafica.insert(1, go.Bar(name='Escenario A (Guardado)', x=['Ventas Totales', 'Ganancia Neta'], y=[st.session_state.escenario_a['Ventas'], st.session_state.escenario_a['Ganancia']], marker_color='#FFA15A', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'))
         
@@ -402,12 +413,57 @@ elif st.session_state.pantalla_actual == "simulador":
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
 
-        df_sim_export = pd.DataFrame({
-            "Métrica Financiera": ["Ventas Totales", "Costo de Inventario (Estimado)", "Inversión en Publicidad", "Ganancia Neta Libre"],
-            "Escenario Actual (Realidad)": [df_final['Sales'].sum(), (df_final['Sales'] * costo_promedio_porcentaje).sum(), 0, df_final['Ganancia_Neta'].sum()],
-            "Escenario Vivo (Proyección)": [v_sim, c_sim, pauta, g_sim]
-        })
-        st.download_button(label="📥 Descargar Comparativo de Simulación (Excel)", data=df_to_excel(df_sim_export), file_name='proyeccion_simulador.xlsx', mime='application/vnd.ms-excel')
+        # ======================================================================
+        # NUEVA CONSTRUCCIÓN DEL EXCEL GERENCIAL (2 BLOQUES DE DATOS)
+        # ======================================================================
+        export_data = {
+            "Métrica / Parámetro": [
+                "[ PARÁMETROS ESTRATÉGICOS ]",
+                "Ajuste de Precios (%)",
+                f"Presupuesto Pauta ({m_sufijo.strip()})",
+                f"Costo por Mensaje/Contacto ({m_sufijo.strip()})",
+                "% de Cierre de Ventas",
+                "Nuevos Clientes Estimados",
+                "",
+                "[ RESULTADOS FINANCIEROS ]",
+                "Ventas Totales Brutas",
+                "Costo de Inventario (Estimado)",
+                "Inversión en Publicidad",
+                "Ganancia Neta Libre"
+            ],
+            "Escenario Actual (Realidad)": [
+                "", "0%", 0, "N/A", "N/A", "N/A", "", "",
+                ventas_actuales_tot,
+                costo_actual_tot,
+                0,
+                ganancia_actual_tot
+            ]
+        }
+
+        if st.session_state.escenario_a is not None:
+            export_data["Escenario A (Guardado)"] = [
+                "",
+                f"{st.session_state.escenario_a['Ajuste_Precios']}%",
+                st.session_state.escenario_a['Pauta'],
+                st.session_state.escenario_a['Costo_Lead'],
+                f"{st.session_state.escenario_a['Conversion']}%",
+                st.session_state.escenario_a['Clientes_Nuevos'],
+                "", "",
+                st.session_state.escenario_a['Ventas'],
+                st.session_state.escenario_a['Costo_Inv'],
+                st.session_state.escenario_a['Pauta'],
+                st.session_state.escenario_a['Ganancia']
+            ]
+
+        export_data["Escenario Vivo (Proyección)"] = [
+            "",
+            f"{precio}%", pauta, costo_lead, f"{tasa_conversion}%", clientes_reales,
+            "", "",
+            v_sim, c_sim, pauta, g_sim
+        ]
+
+        df_sim_export = pd.DataFrame(export_data)
+        st.download_button(label="📥 Descargar Comparativo de Simulación (Excel)", data=df_to_excel(df_sim_export), file_name='proyeccion_simulador_completa.xlsx', mime='application/vnd.ms-excel')
         
         st.markdown("---")
         st.subheader("📱 2. Distribución Estratégica de Pauta")
