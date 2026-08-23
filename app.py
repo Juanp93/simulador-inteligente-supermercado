@@ -74,13 +74,24 @@ with st.sidebar:
     aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver.", value=False)
 
     st.markdown("---")
-    st.download_button("📥 Bajar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
-    archivo = st.file_uploader("📁 Sube tus ventas:", type=['csv', 'xlsx'])
+    
+    # NUEVA SECCIÓN DE GUÍA UX PARA SUBIR ARCHIVOS
+    st.markdown("### 📂 Carga de Datos")
+    st.download_button("📥 Bajar Plantilla de Ejemplo", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
+    
+    with st.expander("⚠️ Requisitos del archivo (Importante)", expanded=True):
+        st.markdown("""
+        1. **Números puros:** No escribas letras ni signos de moneda en las ventas (Ej: escribe *150000*, no *$150.000*).
+        2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*, *Cantidad*).
+        3. **Tamaño:** Procura subir archivos de menos de 50MB.
+        """)
+
+    archivo = st.file_uploader("Sube tus ventas aquí (.csv o .xlsx):", type=['csv', 'xlsx'])
     
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
         else: st.session_state.df_bruto = pd.read_csv(archivo)
-        st.success("¡Datos en memoria!")
+        st.success("¡Datos en memoria y listos para analizar!")
 
     st.markdown('<div class="sidebar-chat"></div>', unsafe_allow_html=True)
     st.subheader("💬 Asistente IA")
@@ -108,7 +119,6 @@ with st.sidebar:
         """
         with chat_container.chat_message("assistant"):
             try:
-                # AQUÍ ESTÁ LA VELOCIDAD: Se activa el stream para escribir en vivo
                 respuesta = modelo_ia.generate_content(prompt_experto, stream=True)
                 texto_completo = st.write_stream(stream_gemini(respuesta))
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
@@ -243,14 +253,12 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.markdown("---")
         st.subheader("🏆 2. Métricas Clave (Análisis Humano)")
         
-        # EL NUEVO TABLERO EJECUTIVO SUPERIOR
         c_top1, c_top2 = st.columns(2)
         with c_top1:
             st.markdown(f'<div class="metric-container"><div class="metric-title">VENTAS TOTALES REGISTRADAS</div><div class="metric-value">{m_simbolo}{ventas_totales_global:,.2f}</div><div class="metric-caption">Suma total de todos los ingresos en tu base de datos.</div></div>', unsafe_allow_html=True)
         with c_top2:
             st.markdown(f'<div class="metric-container {"metric-success" if ganancia_neta_global > 0 else "metric-danger"}"><div class="metric-title">GANANCIA NETA TOTAL</div><div class="metric-value">{m_simbolo}{ganancia_neta_global:,.2f}</div><div class="metric-caption">Dinero libre después de descontar el costo de proveedores/producción.</div></div>', unsafe_allow_html=True)
 
-        # LAS MÉTRICAS DETALLADAS DE CATÁLOGO
         c1, c2 = st.columns(2)
         with c1:
             st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
@@ -357,7 +365,6 @@ elif st.session_state.pantalla_actual == "simulador":
             elif not prod_promo: st.warning("⚠️ Escribe el producto a promocionar.")
             else:
                 prompt_marketing = f"Eres un Copywriter experto. Crea una campaña para '{prod_promo}' con tono '{tono_marca}'. Entrega: 1) Copy para Meta con emojis y CTA. 2) 3 Títulos cortos para Google Ads. 3) 1 Idea de diseño visual/arte."
-                # AQUÍ ESTÁ LA VELOCIDAD: Se activa el stream para la creación de campañas
                 st.markdown("### 💡 Tu Campaña Generada:")
                 try:
                     res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
