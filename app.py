@@ -16,7 +16,6 @@ if "historial_chat" not in st.session_state: st.session_state.historial_chat = [
 if "df_bruto" not in st.session_state: st.session_state.df_bruto = pd.DataFrame()
 if "costos_editados" not in st.session_state: st.session_state.costos_editados = pd.DataFrame()
 if "escenario_a" not in st.session_state: st.session_state.escenario_a = None
-# NUEVA MEMORIA: La "Libreta de Apuntes" para el informe de texto
 if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
@@ -42,7 +41,6 @@ def df_to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
     return output.getvalue()
 
-# NUEVO MOTOR: Generador del Informe de Texto Narrativo
 def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia):
     contenido = f"""====================================================
 INFORME EJECUTIVO - INTELRETAIL PRO
@@ -111,7 +109,8 @@ with st.sidebar:
         st.markdown("""
         1. **Números puros:** No escribas letras ni signos de moneda en las ventas (Ej: escribe *150000*, no *$150.000*).
         2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*, *Cantidad*).
-        3. **Tamaño:** Procura subir archivos de menos de 50MB.
+        3. **Sin Totales:** Sube la base de datos cruda. Elimina filas de "Totales" al final.
+        4. **Tamaño:** Procura subir archivos de menos de 50MB.
         """)
 
     archivo = st.file_uploader("Sube tus ventas aquí (.csv o .xlsx):", type=['csv', 'xlsx'])
@@ -150,7 +149,6 @@ with st.sidebar:
                 respuesta = modelo_ia.generate_content(prompt_experto, stream=True)
                 texto_completo = st.write_stream(stream_gemini(respuesta))
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
-                # Guardamos la asesoría en la libreta
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: st.error("Error de conexión.")
 
@@ -162,6 +160,9 @@ df_final = pd.DataFrame()
 if not st.session_state.df_bruto.empty:
     df_temp = st.session_state.df_bruto.copy()
     
+    # Limpieza básica de filas completamente vacías
+    df_temp = df_temp.dropna(how='all')
+    
     col_map = {}
     for col in df_temp.columns:
         c = str(col).strip().lower()
@@ -172,6 +173,11 @@ if not st.session_state.df_bruto.empty:
             
     df_temp = df_temp.rename(columns=col_map)
     df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()] 
+    
+    # FILTRO INTELIGENTE ANTI-TOTALES
+    if 'Product Name' in df_temp.columns:
+        filtro_totales = df_temp['Product Name'].astype(str).str.lower().str.contains('total', na=False)
+        df_temp = df_temp[~filtro_totales]
     
     if 'Sales' in df_temp.columns:
         if 'Product Name' not in df_temp.columns: df_temp['Product Name'] = 'General'
@@ -283,15 +289,19 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
+                df_cargado = None
                 try:
                     df_cargado = pd.read_csv(archivo_costos)
-                    if 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
-                        st.session_state.costos_editados = df_cargado
-                        st.success("✅ ¡Costos restaurados!")
-                        # SOLUCIÓN DEL BUG F5: Obliga a Streamlit a actualizar la pantalla instantáneamente
-                        st.rerun()
                 except:
-                    st.error("Archivo no válido.")
+                    st.error("❌ Archivo de costos no válido o corrupto.")
+                
+                # REPARACIÓN BUG FANTASMA: Aplicamos costos y refrescamos sin infinito
+                if df_cargado is not None and 'Product Name' in df_cargado.columns and 'Costo (%)' in df_cargado.columns:
+                    if not df_cargado.equals(st.session_state.costos_editados):
+                        st.session_state.costos_editados = df_cargado
+                        st.rerun()
+                    else:
+                        st.success("✅ ¡Costos restaurados exitosamente!")
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
@@ -309,12 +319,16 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
         c1, c2 = st.columns(2)
         with c1:
-            prod_estrella = df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]
-            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{prod_estrella}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
-            st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{df_g["Quantity"].max()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmax()]["Product Name"]}</b><br>El favorito del público. Es el que más unidades vende y atrae el tráfico recurrente a tu local.</div></div>', unsafe_allow_html=True)
+            prod_estrella = df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"] if not df_g.empty else "N/A"
+            ganancia_estrella = df_g["Ganancia_Neta"].max() if not df_g.empty else 0
+            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{ganancia_estrella:,.2f}</div><div class="metric-caption"><b>{prod_estrella}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
+            prod_lider = df_g.loc[df_g["Quantity"].idxmax()]["Product Name"] if not df_g.empty else "N/A"
+            cant_lider = df_g["Quantity"].max() if not df_g.empty else 0
+            st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{cant_lider} Unds</div><div class="metric-caption"><b>{prod_lider}</b><br>El favorito del público. Es el que más unidades vende y atrae el tráfico recurrente a tu local.</div></div>', unsafe_allow_html=True)
         with c2:
-            prod_dormido = df_g.loc[df_g["Quantity"].idxmin()]["Product Name"]
-            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
+            prod_dormido = df_g.loc[df_g["Quantity"].idxmin()]["Product Name"] if not df_g.empty else "N/A"
+            cant_dormido = df_g["Quantity"].min() if not df_g.empty else 0
+            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{cant_dormido} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
         st.markdown("---")
@@ -325,7 +339,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
             st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
             
-            # EL NUEVO BOTÓN DEL INFORME TEXTUAL
             txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia)
             st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
@@ -336,13 +349,19 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
                 else:
                     prompt_analisis = f"Eres un consultor de negocios retail experto. Leyendo los datos de este usuario, su producto estrella (el que más ganancia neta deja) es '{prod_estrella}'. Su producto dormido (el de menor rotación) es '{prod_dormido}'. Su ticket promedio es {ticket_promedio}. Dame 3 viñetas cortas, muy directas y accionables con estrategias precisas para mejorar sus ventas conjuntas y rotar el inventario estancado. Usa lenguaje corporativo, sin saludos iniciales."
-                    st.markdown("#### 💡 Estrategia Sugerida:")
                     try:
                         res_analisis = modelo_ia.generate_content(prompt_analisis, stream=True)
+                        st.markdown("#### 💡 Nueva Estrategia Sugerida:")
                         texto_estrategia = st.write_stream(stream_gemini(res_analisis))
-                        # GUARDAMOS LA RESPUESTA EN LA LIBRETA DE APUNTES
                         st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
+                        st.rerun() # Para forzar que se muestre en el panel de historial inmediatamente
                     except: st.error("Error contactando a la IA.")
+            
+            # REPARACIÓN BUG AMNESIA: Muestra la libreta de apuntes visualmente siempre
+            if st.session_state.apuntes_ia != "":
+                st.write("")
+                with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
+                    st.markdown(st.session_state.apuntes_ia)
         
         st.markdown("---")
         st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
@@ -524,13 +543,19 @@ elif st.session_state.pantalla_actual == "simulador":
             elif not prod_promo: st.warning("⚠️ Escribe el producto a promocionar.")
             else:
                 prompt_marketing = f"Eres un Copywriter experto. Crea una campaña para '{prod_promo}' con tono '{tono_marca}'. Entrega: 1) Copy para Meta con emojis y CTA. 2) 3 Títulos cortos para Google Ads. 3) 1 Idea de diseño visual/arte."
-                st.markdown("### 💡 Tu Campaña Generada:")
                 try:
                     res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
+                    st.markdown("#### 💡 Nueva Campaña Generada:")
                     texto_campana = st.write_stream(stream_gemini(res_mkt))
-                    # GUARDAMOS LA CAMPAÑA EN LA LIBRETA
                     st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
+                    st.rerun()
                 except: st.error("Error contactando a la IA.")
+        
+        # HISTORIAL VISUAL EN EL SIMULADOR TAMBIÉN
+        if st.session_state.apuntes_ia != "":
+            st.write("")
+            with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
+                st.markdown(st.session_state.apuntes_ia)
 
 elif st.session_state.pantalla_actual == "objetivos":
     if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
