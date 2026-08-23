@@ -32,6 +32,14 @@ def generar_plantilla_excel():
         pd.DataFrame({'Fecha': ['01/10/2026', '02/10/2026'], 'Producto': ['Producto A', 'Producto B'], 'Ventas': [100000, 250000], 'Cantidad': [2, 5], 'Cliente': ['Mostrador', 'VIP']}).to_excel(writer, index=False)
     return output.getvalue()
 
+# NUEVO MOTOR DE EXPORTACIÓN (FASE 1)
+@st.cache_data
+def df_to_excel(df):
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
+    return output.getvalue()
+
 st.markdown("""
 <style>
     .metric-container { background-color: #1E1E1E; padding: 20px; border-radius: 10px; border-left: 5px solid #636EFA; margin-bottom: 15px; }
@@ -55,7 +63,7 @@ def stream_gemini(respuesta):
         if chunk.text: yield chunk.text
 
 # ==============================================================================
-# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO
+# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO (INTACTO)
 # ==============================================================================
 with st.sidebar:
     st.title("🧭 Navegación")
@@ -75,7 +83,6 @@ with st.sidebar:
 
     st.markdown("---")
     
-    # NUEVA SECCIÓN DE GUÍA UX PARA SUBIR ARCHIVOS
     st.markdown("### 📂 Carga de Datos")
     st.download_button("📥 Bajar Plantilla de Ejemplo", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     
@@ -228,7 +235,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda para comenzar.")
     else:
         st.subheader("⚙️ 1. Ajuste de Costos (Proveedores o Producción)")
-        st.markdown("💡 **¿Qué significa esto?** Es el porcentaje del precio de venta que te cuesta adquirir o fabricar el producto. Si vendes algo en $100 y te costó $70 al proveedor, tu costo es del 70%.")
+        st.markdown("💡 **¿Qué significa esto?** Es el porcentaje del precio de venta que te cuesta adquirir o fabricar el producto.")
         
         c_sl, c_btn = st.columns([3, 1])
         with c_sl: nuevo_costo_global = st.slider("Asignar un costo global a todo el catálogo (%)", 0.0, 100.0, 70.0, 1.0)
@@ -239,7 +246,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 st.session_state.costos_editados['Costo (%)'] = float(nuevo_costo_global)
                 st.rerun()
 
-        st.markdown("Edita individualmente usando las celdas de la tabla (Soporta navegación rápida con teclado):")
+        st.markdown("Edita individualmente usando las celdas de la tabla:")
         st.session_state.costos_editados = st.data_editor(
             st.session_state.costos_editados, hide_index=True, use_container_width=True,
             column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
@@ -261,11 +268,37 @@ elif st.session_state.pantalla_actual == "diagnostico":
 
         c1, c2 = st.columns(2)
         with c1:
-            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
+            prod_estrella = df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"]
+            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{df_g["Ganancia_Neta"].max():,.2f}</div><div class="metric-caption"><b>{prod_estrella}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{df_g["Quantity"].max()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmax()]["Product Name"]}</b><br>El favorito del público. Es el que más unidades vende y atrae el tráfico recurrente a tu local.</div></div>', unsafe_allow_html=True)
         with c2:
-            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{df_g.loc[df_g["Quantity"].idxmin()]["Product Name"]}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
+            prod_dormido = df_g.loc[df_g["Quantity"].idxmin()]["Product Name"]
+            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{df_g["Quantity"].min()} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
+        
+        # ======================================================================
+        # NUEVA SECCIÓN FASE 1: CONSULTOR IA Y EXPORTACIÓN
+        # ======================================================================
+        st.markdown("---")
+        col_export, col_ia = st.columns(2)
+        
+        with col_export:
+            st.subheader("💾 Exportar Datos")
+            st.markdown("Descarga tu base de datos completa incluyendo las columnas de costos reales y ganancia neta calculadas por el sistema. Ideal para reuniones directivas.")
+            st.download_button(label="📥 Descargar Auditoría (Excel)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
+            
+        with col_ia:
+            st.subheader("🧠 Consultor IA Ejecutivo")
+            st.markdown("Un solo clic para leer tus métricas actuales y obtener estrategias gerenciales de alto impacto.")
+            if st.button("✨ Generar Análisis Automático", use_container_width=True, type="primary"):
+                if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
+                else:
+                    prompt_analisis = f"Eres un consultor de negocios retail experto. Leyendo los datos de este usuario, su producto estrella (el que más ganancia neta deja) es '{prod_estrella}'. Su producto dormido (el de menor rotación) es '{prod_dormido}'. Su ticket promedio es {ticket_promedio}. Dame 3 viñetas cortas, muy directas y accionables con estrategias precisas para mejorar sus ventas conjuntas y rotar el inventario estancado. Usa lenguaje corporativo, sin saludos iniciales."
+                    st.markdown("#### 💡 Estrategia Sugerida:")
+                    try:
+                        res_analisis = modelo_ia.generate_content(prompt_analisis, stream=True)
+                        st.write_stream(stream_gemini(res_analisis))
+                    except: st.error("Error contactando a la IA.")
         
         st.markdown("---")
         st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
@@ -331,6 +364,14 @@ elif st.session_state.pantalla_actual == "simulador":
         ])
         fig.update_layout(barmode='group', height=400, margin=dict(t=50))
         st.plotly_chart(fig, use_container_width=True)
+
+        # NUEVA FUNCIÓN FASE 1: EXPORTACIÓN DEL ESCENARIO SIMULADO
+        df_sim_export = pd.DataFrame({
+            "Métrica Financiera": ["Ventas Totales", "Costo de Inventario (Estimado)", "Inversión en Publicidad", "Ganancia Neta Libre"],
+            "Escenario Actual (Realidad)": [df_final['Sales'].sum(), (df_final['Sales'] * costo_promedio_porcentaje).sum(), 0, df_final['Ganancia_Neta'].sum()],
+            "Escenario Proyectado (Simulación)": [v_sim, c_sim, pauta, g_sim]
+        })
+        st.download_button(label="📥 Descargar Comparativo de Simulación (Excel)", data=df_to_excel(df_sim_export), file_name='proyeccion_simulador.xlsx', mime='application/vnd.ms-excel')
         
         st.markdown("---")
         st.subheader("📱 2. Distribución Estratégica de Pauta")
