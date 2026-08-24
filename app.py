@@ -5,6 +5,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 import google.generativeai as genai
+# ⚠️ NUEVA LIBRERÍA PARA EL MENÚ PREMIUM (Asegúrate de ponerla en requirements.txt)
+from streamlit_option_menu import option_menu
 
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
@@ -82,18 +84,47 @@ def stream_gemini(respuesta):
         if chunk.text: yield chunk.text
 
 # ==============================================================================
-# 2. BARRA LATERAL Y CHATBOT INFERIOR IZQUIERDO
+# 2. BARRA LATERAL (NUEVO MENÚ PREMIUM) Y CHATBOT
 # ==============================================================================
 with st.sidebar:
-    st.title("🧭 Navegación")
-    if st.button("🏠 Inicio", use_container_width=True): cambiar_pantalla("home")
-    if st.button("⚡ Diagnóstico Express", use_container_width=True): cambiar_pantalla("express")
-    if st.button("🔍 Auditoría de Catálogo", use_container_width=True): cambiar_pantalla("diagnostico")
-    if st.button("🎛️ Simulador y Marketing IA", use_container_width=True): cambiar_pantalla("simulador")
-    if st.button("🎯 Planificador Metas", use_container_width=True): cambiar_pantalla("objetivos")
-    
+    st.markdown("<h3 style='text-align: center; color: white;'>📈 IntelRetail Pro<br><span style='font-size: 14px; color: #D4AF37;'>Strategic Console</span></h3>", unsafe_allow_html=True)
     st.markdown("---")
-    selector_moneda = st.selectbox("💱 Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"])
+    
+    # Lógica de sincronización del menú
+    menu_opciones = ["Inicio", "Diagnóstico Express", "Auditoría Catálogo", "Simulador & Pauta IA", "Planificador de Metas"]
+    menu_iconos = ["house", "lightning", "search", "sliders", "bullseye"]
+    menu_ids = ["home", "express", "diagnostico", "simulador", "objetivos"]
+    
+    try:
+        indice_actual = menu_ids.index(st.session_state.pantalla_actual)
+    except:
+        indice_actual = 0
+
+    # Dibuja el menú elegante con acentos cobre
+    seleccion = option_menu(
+        menu_title=None,
+        options=menu_opciones,
+        icons=menu_iconos,
+        menu_icon="cast",
+        default_index=indice_actual,
+        styles={
+            "container": {"padding": "0!important", "background-color": "transparent"},
+            "icon": {"color": "#D4AF37", "font-size": "16px"},
+            "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px", "--hover-color": "#262730", "color": "#A3A3A3"},
+            "nav-link-selected": {"background-color": "#262730", "color": "#D4AF37", "font-weight": "bold", "border-left": "4px solid #D4AF37"},
+        }
+    )
+    
+    # Motor de cambio de pantalla sin romper el estado
+    id_seleccionado = menu_ids[menu_opciones.index(seleccion)]
+    if st.session_state.pantalla_actual != id_seleccionado:
+        st.session_state.pantalla_actual = id_seleccionado
+        st.rerun()
+
+    st.markdown("---")
+    
+    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
+    selector_moneda = st.selectbox("Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"], label_visibility="collapsed")
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
@@ -102,10 +133,10 @@ with st.sidebar:
 
     st.markdown("---")
     
-    st.markdown("### 📂 Carga de Datos")
-    st.download_button("📥 Bajar Plantilla de Ejemplo", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
+    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
+    st.download_button("📥 Descargar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     
-    with st.expander("⚠️ Requisitos del archivo", expanded=True):
+    with st.expander("⚠️ Requisitos del archivo", expanded=False):
         st.markdown("""
         1. **Números puros:** No escribas letras ni signos de moneda en las ventas.
         2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*).
@@ -153,15 +184,13 @@ with st.sidebar:
                 st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL)
+# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - ¡INTACTO!
 # ==============================================================================
 df_final = pd.DataFrame()
 
 if not st.session_state.df_bruto.empty:
     df_temp = st.session_state.df_bruto.copy()
-    
     df_temp = df_temp.dropna(how='all')
-    
     col_map = {}
     for col in df_temp.columns:
         c = str(col).strip().lower()
@@ -183,9 +212,7 @@ if not st.session_state.df_bruto.empty:
         if 'Product Name' not in df_temp.columns: df_temp['Product Name'] = 'General'
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         if 'Customer Name' not in df_temp.columns: df_temp['Customer Name'] = "Mostrador"
-        
         factor_multiplicador = m_factor if aplicar_conversion else 1.0
-        
         df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * factor_multiplicador
         df_temp['Quantity'] = pd.to_numeric(df_temp['Quantity'], errors='coerce').fillna(1)
         
@@ -217,35 +244,35 @@ if st.session_state.pantalla_actual == "home":
         if st.button("Abrir Planificador", use_container_width=True): cambiar_pantalla("objetivos"); st.rerun()
 
 elif st.session_state.pantalla_actual == "express":
-    if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
     st.header("⚡ Diagnóstico Financiero Avanzado (Sin Archivos)")
     st.markdown("Ingresa los datos fraccionados de los últimos **2 meses** para un cálculo preciso de tu realidad comercial.")
     
     st.subheader("🗓️ 1. Ingresos Semanales (8 Semanas)")
     sw1, sw2, sw3, sw4 = st.columns(4)
-    v_s1 = sw1.number_input("Semana 1", value=1250000.0, step=100000.0)
-    v_s2 = sw2.number_input("Semana 2", value=1200000.0, step=100000.0)
-    v_s3 = sw3.number_input("Semana 3", value=1300000.0, step=100000.0)
-    v_s4 = sw4.number_input("Semana 4", value=1250000.0, step=100000.0)
+    # DIAGNÓSTICO EN CEROS ABSOLUTOS
+    v_s1 = sw1.number_input("Semana 1", value=0.0, step=100000.0)
+    v_s2 = sw2.number_input("Semana 2", value=0.0, step=100000.0)
+    v_s3 = sw3.number_input("Semana 3", value=0.0, step=100000.0)
+    v_s4 = sw4.number_input("Semana 4", value=0.0, step=100000.0)
     
     sw5, sw6, sw7, sw8 = st.columns(4)
-    v_s5 = sw5.number_input("Semana 5", value=1250000.0, step=100000.0)
-    v_s6 = sw6.number_input("Semana 6", value=1200000.0, step=100000.0)
-    v_s7 = sw7.number_input("Semana 7", value=1300000.0, step=100000.0)
-    v_s8 = sw8.number_input("Semana 8", value=1250000.0, step=100000.0)
+    v_s5 = sw5.number_input("Semana 5", value=0.0, step=100000.0)
+    v_s6 = sw6.number_input("Semana 6", value=0.0, step=100000.0)
+    v_s7 = sw7.number_input("Semana 7", value=0.0, step=100000.0)
+    v_s8 = sw8.number_input("Semana 8", value=0.0, step=100000.0)
     
     ventas_totales = v_s1 + v_s2 + v_s3 + v_s4 + v_s5 + v_s6 + v_s7 + v_s8
     
     st.subheader("💼 2. Estructura de Negocio y Egresos (Bimestral)")
     c1, c2, c3 = st.columns(3)
     with c1:
-        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 60)
-        margen_promedio = st.slider("Margen Neto Promedio (%)", 5, 90, 45)
+        mix_servicios = st.slider("% Ingresos por Servicios (vs. Productos físicos)", 0, 100, 0)
+        margen_promedio = st.slider("Margen Neto Promedio (%)", 0, 90, 0)
     with c2:
-        gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=2400000.0)
-        gastos_variables = st.number_input("Costos Variables Estimados (2 Meses)", value=600000.0)
+        gastos_fijos = st.number_input("Gastos Fijos Acumulados (2 Meses)", value=0.0)
+        gastos_variables = st.number_input("Costos Variables Estimados (2 Meses)", value=0.0)
     with c3:
-        clientes_mes = st.number_input("Atenciones/Clientes Totales (8 Semanas):", value=700)
+        clientes_mes = st.number_input("Atenciones/Clientes Totales (8 Semanas):", value=0)
     
     utilidad = (ventas_totales * (margen_promedio / 100)) - gastos_fijos - gastos_variables
     punto_eq = (gastos_fijos + gastos_variables) / (margen_promedio / 100) if margen_promedio > 0 else 0
@@ -253,12 +280,11 @@ elif st.session_state.pantalla_actual == "express":
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
-    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad > 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA (8 SEMANAS)</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia 100% real y libre del periodo.</div></div>', unsafe_allow_html=True)
+    r1.markdown(f'<div class="metric-container {"metric-success" if utilidad >= 0 else "metric-danger"}"><div class="metric-title">UTILIDAD NETA (8 SEMANAS)</div><div class="metric-value">{m_simbolo}{utilidad:,.2f}</div><div class="metric-caption">Ganancia 100% real y libre del periodo.</div></div>', unsafe_allow_html=True)
     r2.markdown(f'<div class="metric-container metric-warning"><div class="metric-title">PUNTO DE EQUILIBRIO BIMESTRAL</div><div class="metric-value">{m_simbolo}{punto_eq:,.2f}</div><div class="metric-caption">Venta mínima en 2 meses para no tener pérdidas.</div></div>', unsafe_allow_html=True)
     r3.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO</div><div class="metric-value">{m_simbolo}{ticket:,.2f}</div><div class="metric-caption">Dinero promedio por cada cliente atendido.</div></div>', unsafe_allow_html=True)
 
 elif st.session_state.pantalla_actual == "diagnostico":
-    if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
     st.header("📊 Auditoría de Catálogo y Costos")
     if df_final.empty: 
         st.warning("👈 Sube tu archivo de ventas en el menú de la izquierda para comenzar.")
@@ -276,13 +302,11 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 st.rerun()
 
         st.markdown("Edita individualmente usando las celdas de la tabla:")
-        # SOLUCIÓN BUG 2 (RECÁLCULO EN VIVO): Capturamos tu edición manual al instante
         costos_actualizados = st.data_editor(
             st.session_state.costos_editados, hide_index=True, use_container_width=True,
             column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
         )
         
-        # Si cambiaste un número, el sistema actualiza su matemática AHORA MISMO, antes de pintar gráficas
         if not costos_actualizados.equals(st.session_state.costos_editados):
             st.session_state.costos_editados = costos_actualizados
             df_final = pd.merge(df_temp, st.session_state.costos_editados, on='Product Name', how='left')
@@ -297,7 +321,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
-                # SOLUCIÓN BUG 1 (LA GUERRA CIVIL): Botón de seguridad para evitar titileos
                 if st.button("♻️ Aplicar Costos de este Archivo", use_container_width=True):
                     try:
                         df_cargado = pd.read_csv(archivo_costos)
@@ -322,7 +345,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with c_top1:
             st.markdown(f'<div class="metric-container"><div class="metric-title">VENTAS TOTALES REGISTRADAS</div><div class="metric-value">{m_simbolo}{ventas_totales_global:,.2f}</div><div class="metric-caption">Suma total de todos los ingresos en tu base de datos.</div></div>', unsafe_allow_html=True)
         with c_top2:
-            st.markdown(f'<div class="metric-container {"metric-success" if ganancia_neta_global > 0 else "metric-danger"}"><div class="metric-title">GANANCIA NETA TOTAL</div><div class="metric-value">{m_simbolo}{ganancia_neta_global:,.2f}</div><div class="metric-caption">Dinero libre después de descontar el costo de proveedores/producción.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container {"metric-success" if ganancia_neta_global >= 0 else "metric-danger"}"><div class="metric-title">GANANCIA NETA TOTAL</div><div class="metric-value">{m_simbolo}{ganancia_neta_global:,.2f}</div><div class="metric-caption">Dinero libre después de descontar el costo de proveedores/producción.</div></div>', unsafe_allow_html=True)
 
         c1, c2 = st.columns(2)
         with c1:
@@ -394,7 +417,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.plotly_chart(fig_extra, use_container_width=True)
 
 elif st.session_state.pantalla_actual == "simulador":
-    if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
     st.header("🎛️ Simulador Financiero y Marketing IA")
     
     if df_final.empty: 
@@ -565,15 +587,14 @@ elif st.session_state.pantalla_actual == "simulador":
                 st.markdown(st.session_state.apuntes_ia)
 
 elif st.session_state.pantalla_actual == "objetivos":
-    if st.button("⬅️ Volver al Inicio"): cambiar_pantalla("home"); st.rerun()
     st.header("🎯 Planificador Estratégico (Modo Dios)")
     
     st.markdown("### Configura el entorno operativo de tu negocio:")
     c1, c2, c3, c4 = st.columns(4)
-    with c1: meta = st.number_input(f"Ganancia Deseada ({m_sufijo}):", value=10000000.0, step=500000.0)
+    with c1: meta = st.number_input(f"Ganancia Deseada ({m_sufijo}):", value=0.0, step=500000.0)
     with c2: meses = st.slider("Horizonte (Meses):", 1, 12, 1)
-    with c3: gastos = st.number_input(f"Gastos Fijos/Mes ({m_sufijo}):", value=1500000.0, step=100000.0)
-    with c4: capacidad_max = st.number_input("Tope Operativo Diario:", value=20)
+    with c3: gastos = st.number_input(f"Gastos Fijos/Mes ({m_sufijo}):", value=0.0, step=100000.0)
+    with c4: capacidad_max = st.number_input("Tope Operativo Diario:", value=0)
         
     st.markdown("### Palancas Estratégicas Avanzadas:")
     p1, p2 = st.columns(2)
@@ -592,7 +613,7 @@ elif st.session_state.pantalla_actual == "objetivos":
     t_prom_simulado = t_prom_base * (1 + (ajuste_tarifas/100))
     
     clientes_diarios = int(np.ceil(ventas_diarias_req / t_prom_simulado)) if t_prom_simulado > 0 else 0
-    alerta_capacidad = "metric-danger" if clientes_diarios > capacidad_max else "metric-warning"
+    alerta_capacidad = "metric-danger" if clientes_diarios > capacidad_max and capacidad_max > 0 else "metric-warning"
     
     st.markdown("---")
     r1, r2, r3 = st.columns(3)
@@ -600,5 +621,5 @@ elif st.session_state.pantalla_actual == "objetivos":
     r2.markdown(f'<div class="metric-container"><div class="metric-title">META DE VENTA DIARIA</div><div class="metric-value">{m_simbolo}{ventas_diarias_req:,.2f}</div><div class="metric-caption">Venta mínima promedio cada día para llegar al objetivo.</div></div>', unsafe_allow_html=True)
     r3.markdown(f'<div class="metric-container {alerta_capacidad}"><div class="metric-title">CLIENTES DIARIOS REQUERIDOS</div><div class="metric-value">{clientes_diarios} Compras/Día</div><div class="metric-caption">Límite Operativo configurado: {capacidad_max} atenciones al día.</div></div>', unsafe_allow_html=True)
     
-    if clientes_diarios > capacidad_max:
+    if clientes_diarios > capacidad_max and capacidad_max > 0:
         st.error(f"🚨 ¡ALERTA OPERATIVA! Tu meta requiere {clientes_diarios} clientes diarios, pero tu negocio solo soporta {capacidad_max}. Debes subir tus tarifas, reducir tus costos operativos o extender el plazo de la meta.")
