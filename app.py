@@ -61,68 +61,32 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN HTML PARA ESFERAS (Z-INDEX PROFUNDO)
-st.markdown("""
-<div class="bg-orb orb-1"></div>
-<div class="bg-orb orb-2"></div>
-""", unsafe_allow_html=True)
-
-# INYECCIÓN CSS PREMIUM COMPLETA
+# INYECCIÓN CSS PREMIUM CON TU FONDO ANIMADO
 st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
     [data-testid="stToolbar"] {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     
-    /* ESFERAS DE LUZ (HACK HTML) */
-    .bg-orb {
-        position: fixed;
-        border-radius: 50%;
-        filter: blur(120px);
-        z-index: -999; /* Empuja las luces al fondo extremo */
-        pointer-events: none; /* Las hace invisibles a los clics del mouse */
-        animation: gravedad 12s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .orb-1 {
-        width: 700px;
-        height: 700px;
-        background: radial-gradient(circle, rgba(207, 157, 123, 0.18) 0%, rgba(207, 157, 123, 0) 65%); /* Antique Brass */
-        top: -15%;
-        left: -10%;
-    }
-    .orb-2 {
-        width: 800px;
-        height: 800px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 70%); /* Luz Blanca */
-        bottom: -10%;
-        right: -10%;
-        animation-delay: -6s; /* Ritmo asimétrico */
-    }
-    
-    @keyframes gravedad {
-        0% { transform: scale(0.85) translate(0px, 0px); opacity: 0.6; }
-        100% { transform: scale(1.15) translate(40px, -20px); opacity: 1; }
-    }
-
-    /* RED GEOMÉTRICA */
+    /* FONDO ANIMADO MAESTRO (GIF DE GITHUB) */
     [data-testid="stAppViewContainer"] {
         background-color: #0C1519;
-        background-image: 
-            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-        background-size: 60px 60px;
+        background-image: url('https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/GIF1.gif');
+        background-size: cover;
         background-position: center center;
+        background-repeat: no-repeat;
+        background-attachment: fixed;
     }
     
     /* EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card { 
-        background: linear-gradient(135deg, rgba(22, 33, 39, 0.65) 0%, rgba(12, 21, 25, 0.85) 100%);
+        background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
         border: 1px solid rgba(114, 75, 57, 0.35);
         border-radius: 16px;
         color: #F3F4F6;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     .metric-container { 
         padding: 22px; 
@@ -143,7 +107,7 @@ st.markdown("""
         text-align: center;
         transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .home-card:hover { transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.15); }
+    .home-card:hover { transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }
     .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
     .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
     
