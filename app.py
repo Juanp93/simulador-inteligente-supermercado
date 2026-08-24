@@ -5,7 +5,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 import google.generativeai as genai
-# ⚠️ NUEVA LIBRERÍA PARA EL MENÚ PREMIUM (Asegúrate de ponerla en requirements.txt)
 from streamlit_option_menu import option_menu
 
 # ==============================================================================
@@ -62,20 +61,41 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
+# INYECCIÓN CSS PREMIUM FASE 2
 st.markdown("""
 <style>
-    .metric-container { background-color: #1E1E1E; padding: 20px; border-radius: 10px; border-left: 5px solid #636EFA; margin-bottom: 15px; }
-    .metric-success { border-left: 5px solid #00CC96; }
-    .metric-warning { border-left: 5px solid #FFA15A; }
-    .metric-danger { border-left: 5px solid #EF553B; }
-    .metric-title { font-size: 13px; color: #A3A3A3; font-weight: bold; text-transform: uppercase; }
-    .metric-value { font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
-    .metric-caption { font-size: 12px; color: #858585; margin-top: 4px; line-height: 1.4; }
-    .home-card { background-color: #1a1c24; border: 1px solid #2d3139; border-radius: 12px; padding: 25px; margin-bottom: 20px; text-align: center; }
-    .home-card h3 { color: #ffffff; margin-bottom: 10px; font-size: 18px; }
-    .home-card p { color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }
+    .metric-container { 
+        background-color: #151821; 
+        padding: 22px; 
+        border-radius: 12px; 
+        border-left: 4px solid #D4AF37; 
+        margin-bottom: 15px;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        border-top: 1px solid rgba(255,255,255,0.05);
+        border-right: 1px solid rgba(255,255,255,0.05);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .metric-success { border-left: 4px solid #00CC96; }
+    .metric-warning { border-left: 4px solid #FFA15A; }
+    .metric-danger { border-left: 4px solid #EF553B; }
+    .metric-title { font-size: 13px; color: #8F95A3; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .metric-value { font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
+    .metric-caption { font-size: 12px; color: #6C7280; line-height: 1.4; }
+    .home-card { 
+        background-color: #151821; 
+        border: 1px solid rgba(255,255,255,0.08); 
+        border-radius: 16px; 
+        padding: 30px; 
+        margin-bottom: 20px; 
+        text-align: center;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        transition: transform 0.2s ease-in-out;
+    }
+    .home-card:hover { transform: translateY(-3px); border: 1px solid #D4AF37; }
+    .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
+    .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
     div[data-testid="stSidebarNav"] {display: none;}
-    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }
+    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #2d3139; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -87,10 +107,9 @@ def stream_gemini(respuesta):
 # 2. BARRA LATERAL (NUEVO MENÚ PREMIUM) Y CHATBOT
 # ==============================================================================
 with st.sidebar:
-    st.markdown("<h3 style='text-align: center; color: white;'>📈 IntelRetail Pro<br><span style='font-size: 14px; color: #D4AF37;'>Strategic Console</span></h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: white; margin-bottom: 5px;'>🚀 IntelRetail Pro<br><span style='font-size: 14px; color: #D4AF37; font-weight: 500;'>Strategic Console</span></h3>", unsafe_allow_html=True)
     st.markdown("---")
     
-    # Lógica de sincronización del menú
     menu_opciones = ["Inicio", "Diagnóstico Express", "Auditoría Catálogo", "Simulador & Pauta IA", "Planificador de Metas"]
     menu_iconos = ["house", "lightning", "search", "sliders", "bullseye"]
     menu_ids = ["home", "express", "diagnostico", "simulador", "objetivos"]
@@ -100,7 +119,6 @@ with st.sidebar:
     except:
         indice_actual = 0
 
-    # Dibuja el menú elegante con acentos cobre
     seleccion = option_menu(
         menu_title=None,
         options=menu_opciones,
@@ -115,7 +133,6 @@ with st.sidebar:
         }
     )
     
-    # Motor de cambio de pantalla sin romper el estado
     id_seleccionado = menu_ids[menu_opciones.index(seleccion)]
     if st.session_state.pantalla_actual != id_seleccionado:
         st.session_state.pantalla_actual = id_seleccionado
@@ -123,7 +140,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold; margin-bottom: 0px;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
     selector_moneda = st.selectbox("Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"], label_visibility="collapsed")
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
@@ -133,7 +150,7 @@ with st.sidebar:
 
     st.markdown("---")
     
-    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold; margin-bottom: 0px;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
     st.download_button("📥 Descargar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     
     with st.expander("⚠️ Requisitos del archivo", expanded=False):
@@ -184,7 +201,7 @@ with st.sidebar:
                 st.error("Error de conexión.")
 
 # ==============================================================================
-# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - ¡INTACTO!
+# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - INTACTO
 # ==============================================================================
 df_final = pd.DataFrame()
 
@@ -229,27 +246,28 @@ if not st.session_state.df_bruto.empty:
 # ==============================================================================
 
 if st.session_state.pantalla_actual == "home":
-    st.title("🚀 Bienvenido a IntelRetail Pro")
-    st.markdown("#### *Tu copiloto estratégico de inteligencia comercial.*")
+    st.markdown("<h1 style='text-align: center; margin-bottom: 5px;'>🚀 Bienvenido a IntelRetail Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align: center; color: #8F95A3; margin-bottom: 40px;'><em>Tu copiloto estratégico de inteligencia comercial.</em></h4>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
         st.markdown('<div class="home-card"><h3>⚡ Diagnóstico Express</h3><p>Calcula tu rentabilidad separando servicios, productos y gastos a 8 semanas.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Diagnóstico", use_container_width=True, type="primary"): cambiar_pantalla("express"); st.rerun()
+        st.write("")
         st.markdown('<div class="home-card"><h3>🎛️ Simulador y Marketing IA</h3><p>Proyecta pauta realista y genera campañas automáticas con IA.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Simulador", use_container_width=True): cambiar_pantalla("simulador"); st.rerun()
     with c2:
         st.markdown('<div class="home-card"><h3>🔍 Auditoría de Catálogo</h3><p>Métricas claras sobre la salud de tus productos con ajuste de costos global.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Auditoría", use_container_width=True): cambiar_pantalla("diagnostico"); st.rerun()
+        st.write("")
         st.markdown('<div class="home-card"><h3>🎯 Planificador Estratégico</h3><p>Proyecta tarifas, meses pico y tu capacidad operativa tope.</p></div>', unsafe_allow_html=True)
         if st.button("Abrir Planificador", use_container_width=True): cambiar_pantalla("objetivos"); st.rerun()
 
 elif st.session_state.pantalla_actual == "express":
-    st.header("⚡ Diagnóstico Financiero Avanzado (Sin Archivos)")
+    st.header("⚡ Diagnóstico Financiero Avanzado")
     st.markdown("Ingresa los datos fraccionados de los últimos **2 meses** para un cálculo preciso de tu realidad comercial.")
     
     st.subheader("🗓️ 1. Ingresos Semanales (8 Semanas)")
     sw1, sw2, sw3, sw4 = st.columns(4)
-    # DIAGNÓSTICO EN CEROS ABSOLUTOS
     v_s1 = sw1.number_input("Semana 1", value=0.0, step=100000.0)
     v_s2 = sw2.number_input("Semana 2", value=0.0, step=100000.0)
     v_s3 = sw3.number_input("Semana 3", value=0.0, step=100000.0)
@@ -317,7 +335,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
         col_m1, col_m2 = st.columns(2)
         with col_m1:
             csv_costos = st.session_state.costos_editados.to_csv(index=False).encode('utf-8')
-            st.download_button(label="📥 Descargar mi tabla de Costos (.csv)", data=csv_costos, file_name='mis_costos_guardados.csv', mime='text/csv', use_container_width=True)
+            st.download_button(label="📥 Descargar Costos (.csv)", data=csv_costos, file_name='mis_costos_guardados.csv', mime='text/csv', use_container_width=True)
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
@@ -351,14 +369,14 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with c1:
             prod_estrella = df_g.loc[df_g["Ganancia_Neta"].idxmax()]["Product Name"] if not df_g.empty else "N/A"
             ganancia_estrella = df_g["Ganancia_Neta"].max() if not df_g.empty else 0
-            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (TU MEJOR NEGOCIO)</div><div class="metric-value">{m_simbolo}{ganancia_estrella:,.2f}</div><div class="metric-caption"><b>{prod_estrella}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container metric-success"><div class="metric-title">ESTRELLA (MAYOR GANANCIA NETA)</div><div class="metric-value">{m_simbolo}{ganancia_estrella:,.2f}</div><div class="metric-caption"><b>{prod_estrella}</b><br>El campeón indiscutible. Es el artículo o servicio que más dinero libre y real deja en tu caja.</div></div>', unsafe_allow_html=True)
             prod_lider = df_g.loc[df_g["Quantity"].idxmax()]["Product Name"] if not df_g.empty else "N/A"
             cant_lider = df_g["Quantity"].max() if not df_g.empty else 0
             st.markdown(f'<div class="metric-container"><div class="metric-title">LÍDER EN ROTACIÓN</div><div class="metric-value">{cant_lider} Unds</div><div class="metric-caption"><b>{prod_lider}</b><br>El favorito del público. Es el que más unidades vende y atrae el tráfico recurrente a tu local.</div></div>', unsafe_allow_html=True)
         with c2:
             prod_dormido = df_g.loc[df_g["Quantity"].idxmin()]["Product Name"] if not df_g.empty else "N/A"
             cant_dormido = df_g["Quantity"].min() if not df_g.empty else 0
-            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{cant_dormido} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
+            st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (MENOR ROTACIÓN)</div><div class="metric-value">{cant_dormido} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
         st.markdown("---")
@@ -396,7 +414,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
         st.markdown("---")
         st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
         fig_bcg = px.scatter(df_g, x='Quantity', y='Ganancia_Neta', size='Sales', color='Product Name', hover_name='Product Name', labels={'Quantity': 'Unidades Vendidas', 'Ganancia_Neta': 'Ganancia Neta Libre'})
-        fig_bcg.update_layout(showlegend=True, height=500, margin=dict(t=10, l=10, r=10, b=10))
+        fig_bcg.update_layout(showlegend=True, height=500, margin=dict(t=10, l=10, r=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#8F95A3'))
         st.plotly_chart(fig_bcg, use_container_width=True)
 
         st.markdown("---")
@@ -413,7 +431,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
             data_plot = df_final.groupby('Product Name')['Quantity'].sum().reset_index().sort_values('Quantity', ascending=False).head(10)
             fig_extra = px.bar(data_plot, x='Quantity', y='Product Name', orientation='h', color='Quantity', color_continuous_scale='Oranges', labels={'Quantity': 'Unidades Totales Vendidas', 'Product Name': 'Producto'})
 
-        fig_extra.update_layout(height=450, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10))
+        fig_extra.update_layout(height=450, showlegend=False, yaxis=dict(autorange="reversed"), margin=dict(t=10, l=10, r=10, b=10), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#8F95A3'))
         st.plotly_chart(fig_extra, use_container_width=True)
 
 elif st.session_state.pantalla_actual == "simulador":
@@ -479,7 +497,7 @@ elif st.session_state.pantalla_actual == "simulador":
                     st.rerun()
 
         barras_grafica = [
-            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[ventas_actuales_tot, ganancia_actual_tot], marker_color='#636EFA', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
+            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[ventas_actuales_tot, ganancia_actual_tot], marker_color='#D4AF37', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
             go.Bar(name='Escenario Vivo (Proyección)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
         ]
         
@@ -487,7 +505,7 @@ elif st.session_state.pantalla_actual == "simulador":
             barras_grafica.insert(1, go.Bar(name='Escenario A (Guardado)', x=['Ventas Totales', 'Ganancia Neta'], y=[st.session_state.escenario_a['Ventas'], st.session_state.escenario_a['Ganancia']], marker_color='#FFA15A', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'))
         
         fig = go.Figure(data=barras_grafica)
-        fig.update_layout(barmode='group', height=400, margin=dict(t=50))
+        fig.update_layout(barmode='group', height=400, margin=dict(t=50), paper_bgcolor='rgba(0,0,0,0)', plot_bgcolor='rgba(0,0,0,0)', font=dict(color='#8F95A3'))
         st.plotly_chart(fig, use_container_width=True)
 
         export_data = {
@@ -556,7 +574,7 @@ elif st.session_state.pantalla_actual == "simulador":
             dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
             fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
             fig_pauta.update_traces(textinfo='percent+label')
-            fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350)
+            fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#8F95A3'))
             st.plotly_chart(fig_pauta, use_container_width=True)
         else:
             st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada.")
