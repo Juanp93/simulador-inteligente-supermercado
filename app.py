@@ -10,7 +10,7 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
-st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="📈")
+st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
@@ -61,41 +61,48 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN CSS PREMIUM FASE 2
+# INYECCIÓN CSS PREMIUM: GLASSMORPHISM Y COLORES EXACTOS
 st.markdown("""
 <style>
+    /* Ocultar botones de Streamlit en la esquina superior */
+    [data-testid="stToolbar"] {visibility: hidden !important;}
+    footer {visibility: hidden !important;}
+    
+    /* Efecto Glassmorphism en tarjetas (Receta exacta de globals.css) */
+    .metric-container, .home-card { 
+        background: linear-gradient(135deg, rgba(22, 33, 39, 0.6) 0%, rgba(12, 21, 25, 0.85) 100%);
+        backdrop-filter: blur(18px);
+        -webkit-backdrop-filter: blur(18px);
+        border: 1px solid rgba(114, 75, 57, 0.35); /* Borde café semitransparente */
+        border-radius: 16px;
+        color: #F3F4F6;
+        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
     .metric-container { 
-        background-color: #151821; 
         padding: 22px; 
-        border-radius: 12px; 
-        border-left: 4px solid #D4AF37; 
         margin-bottom: 15px;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-        border-top: 1px solid rgba(255,255,255,0.05);
-        border-right: 1px solid rgba(255,255,255,0.05);
-        border-bottom: 1px solid rgba(255,255,255,0.05);
+        border-left: 4px solid #CF9D7B; /* Acento Antique Brass */
     }
     .metric-success { border-left: 4px solid #00CC96; }
     .metric-warning { border-left: 4px solid #FFA15A; }
     .metric-danger { border-left: 4px solid #EF553B; }
-    .metric-title { font-size: 13px; color: #8F95A3; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    
+    .metric-title { font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .metric-value { font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
-    .metric-caption { font-size: 12px; color: #6C7280; line-height: 1.4; }
+    .metric-caption { font-size: 12px; color: #8F95A3; line-height: 1.4; }
+    
     .home-card { 
-        background-color: #151821; 
-        border: 1px solid rgba(255,255,255,0.08); 
-        border-radius: 16px; 
         padding: 30px; 
         margin-bottom: 20px; 
         text-align: center;
-        box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-        transition: transform 0.2s ease-in-out;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .home-card:hover { transform: translateY(-3px); border: 1px solid #D4AF37; }
+    .home-card:hover { transform: translateY(-3px); border: 1px solid #CF9D7B; }
     .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
     .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
+    
     div[data-testid="stSidebarNav"] {display: none;}
-    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #2d3139; }
+    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }
 </style>
 """, unsafe_allow_html=True)
 
@@ -107,7 +114,7 @@ def stream_gemini(respuesta):
 # 2. BARRA LATERAL (NUEVO MENÚ PREMIUM) Y CHATBOT
 # ==============================================================================
 with st.sidebar:
-    st.markdown("<h3 style='text-align: center; color: white; margin-bottom: 5px;'>🚀 IntelRetail Pro<br><span style='font-size: 14px; color: #D4AF37; font-weight: 500;'>Strategic Console</span></h3>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center; color: white; margin-bottom: 5px;'>🚀 IntelRetail Pro<br><span style='font-size: 14px; color: #CF9D7B; font-weight: 500;'>Strategic Console</span></h3>", unsafe_allow_html=True)
     st.markdown("---")
     
     menu_opciones = ["Inicio", "Diagnóstico Express", "Auditoría Catálogo", "Simulador & Pauta IA", "Planificador de Metas"]
@@ -119,6 +126,7 @@ with st.sidebar:
     except:
         indice_actual = 0
 
+    # Menú estilo "Píldora"
     seleccion = option_menu(
         menu_title=None,
         options=menu_opciones,
@@ -127,9 +135,9 @@ with st.sidebar:
         default_index=indice_actual,
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
-            "icon": {"color": "#D4AF37", "font-size": "16px"},
-            "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px", "--hover-color": "#262730", "color": "#A3A3A3"},
-            "nav-link-selected": {"background-color": "#262730", "color": "#D4AF37", "font-weight": "bold", "border-left": "4px solid #D4AF37"},
+            "icon": {"color": "#CF9D7B", "font-size": "16px"},
+            "nav-link": {"font-size": "14px", "text-align": "left", "margin":"2px 0px", "border-radius": "10px", "--hover-color": "rgba(255,255,255,0.05)", "color": "#8F95A3"},
+            "nav-link-selected": {"background-color": "rgba(207, 157, 123, 0.15)", "color": "#CF9D7B", "font-weight": "bold", "border": "1px solid rgba(207, 157, 123, 0.5)"},
         }
     )
     
@@ -140,22 +148,22 @@ with st.sidebar:
 
     st.markdown("---")
     
-    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold; margin-bottom: 0px;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 12px; color: #CF9D7B; font-weight: bold; margin-bottom: 0px;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
     selector_moneda = st.selectbox("Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"], label_visibility="collapsed")
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
     elif selector_moneda == "MXN (Pesos Mexicanos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X MXN):", 1.0, value=18.5, step=0.5), "$", " MXN"
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
-    aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente a la que quieres ver.", value=False)
+    aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente.", value=False)
 
     st.markdown("---")
     
-    st.markdown("<p style='font-size: 12px; color: #D4AF37; font-weight: bold; margin-bottom: 0px;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
+    st.markdown("<p style='font-size: 12px; color: #CF9D7B; font-weight: bold; margin-bottom: 0px;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
     st.download_button("📥 Descargar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     
     with st.expander("⚠️ Requisitos del archivo", expanded=False):
         st.markdown("""
-        1. **Números puros:** No escribas letras ni signos de moneda en las ventas.
+        1. **Números puros:** No escribas letras ni signos de moneda.
         2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*).
         3. **Sin Totales:** Sube la base de datos cruda.
         """)
@@ -165,7 +173,7 @@ with st.sidebar:
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
         else: st.session_state.df_bruto = pd.read_csv(archivo)
-        st.success("¡Datos en memoria y listos para analizar!")
+        st.success("¡Datos en memoria listos!")
 
     st.markdown('<div class="sidebar-chat"></div>', unsafe_allow_html=True)
     st.subheader("💬 Asistente IA")
@@ -188,7 +196,7 @@ with st.sidebar:
         Eres el Asesor IA de IntelRetail Pro. 
         Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
         Datos: {resumen_datos}
-        Actúa como consultor experto. Identifica el nicho del negocio según los datos provistos y adapta tus recomendaciones de marketing y ventas.
+        Actúa como consultor experto. Identifica el nicho del negocio y adapta tus recomendaciones.
         Responde breve y muy práctico a: {pregunta}
         """
         with chat_container.chat_message("assistant"):
@@ -246,7 +254,7 @@ if not st.session_state.df_bruto.empty:
 # ==============================================================================
 
 if st.session_state.pantalla_actual == "home":
-    st.markdown("<h1 style='text-align: center; margin-bottom: 5px;'>🚀 Bienvenido a IntelRetail Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<h1 style='text-align: center; margin-bottom: 5px; color: #FFFFFF;'>🚀 Bienvenido a IntelRetail Pro</h1>", unsafe_allow_html=True)
     st.markdown("<h4 style='text-align: center; color: #8F95A3; margin-bottom: 40px;'><em>Tu copiloto estratégico de inteligencia comercial.</em></h4>", unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
@@ -497,7 +505,7 @@ elif st.session_state.pantalla_actual == "simulador":
                     st.rerun()
 
         barras_grafica = [
-            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[ventas_actuales_tot, ganancia_actual_tot], marker_color='#D4AF37', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
+            go.Bar(name='Actual (Realidad)', x=['Ventas Totales', 'Ganancia Neta'], y=[ventas_actuales_tot, ganancia_actual_tot], marker_color='#CF9D7B', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside'),
             go.Bar(name='Escenario Vivo (Proyección)', x=['Ventas Totales', 'Ganancia Neta'], y=[v_sim, g_sim], marker_color='#00CC96', texttemplate=m_simbolo+'%{y:,.0f}', textposition='outside')
         ]
         
