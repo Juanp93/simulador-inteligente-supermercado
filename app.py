@@ -61,27 +61,76 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN CSS PREMIUM: GLASSMORPHISM Y COLORES EXACTOS
+# INYECCIÓN CSS PREMIUM: RED DINÁMICA, LUCES RESPIRABLES Y GLASSMORPHISM
 st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
     [data-testid="stToolbar"] {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     
-    /* Efecto Glassmorphism en tarjetas (Receta exacta de globals.css) */
+    /* CAPA BASE 1: La Red Geométrica en el fondo */
+    [data-testid="stAppViewContainer"] {
+        background-color: #0C1519;
+        background-image: 
+            linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        background-position: center center;
+        z-index: 0;
+    }
+    
+    /* CAPA BASE 2: Luces Respirables (Singularidades) */
+    [data-testid="stAppViewContainer"]::before, [data-testid="stAppViewContainer"]::after {
+        content: "";
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        z-index: -1; 
+        pointer-events: none; /* Permite hacer clic a través de la luz */
+        animation: gravedad 12s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Luz 1: Antique Brass (Cobre) Arriba a la Izquierda */
+    [data-testid="stAppViewContainer"]::before {
+        width: 700px;
+        height: 700px;
+        background: radial-gradient(circle, rgba(207, 157, 123, 0.12) 0%, rgba(207, 157, 123, 0) 65%);
+        top: -15%;
+        left: -10%;
+    }
+
+    /* Luz 2: Luz Estelar Blanca Abajo a la Derecha */
+    [data-testid="stAppViewContainer"]::after {
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
+        bottom: -10%;
+        right: -10%;
+        animation-delay: -6s; /* Desfase para ritmo asimétrico */
+    }
+
+    /* Animación de Gravedad Visual */
+    @keyframes gravedad {
+        0% { transform: scale(0.85) translate(0px, 0px); opacity: 0.6; }
+        100% { transform: scale(1.15) translate(40px, -20px); opacity: 1; }
+    }
+    
+    /* EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card { 
-        background: linear-gradient(135deg, rgba(22, 33, 39, 0.6) 0%, rgba(12, 21, 25, 0.85) 100%);
-        backdrop-filter: blur(18px);
-        -webkit-backdrop-filter: blur(18px);
-        border: 1px solid rgba(114, 75, 57, 0.35); /* Borde café semitransparente */
+        background: linear-gradient(135deg, rgba(22, 33, 39, 0.65) 0%, rgba(12, 21, 25, 0.85) 100%);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(114, 75, 57, 0.35);
         border-radius: 16px;
         color: #F3F4F6;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        position: relative;
+        z-index: 1; /* Asegura que queden encima de las luces */
     }
     .metric-container { 
         padding: 22px; 
         margin-bottom: 15px;
-        border-left: 4px solid #CF9D7B; /* Acento Antique Brass */
+        border-left: 4px solid #CF9D7B; 
     }
     .metric-success { border-left: 4px solid #00CC96; }
     .metric-warning { border-left: 4px solid #FFA15A; }
@@ -97,7 +146,7 @@ st.markdown("""
         text-align: center;
         transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .home-card:hover { transform: translateY(-3px); border: 1px solid #CF9D7B; }
+    .home-card:hover { transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.15); }
     .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
     .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
     
@@ -126,7 +175,6 @@ with st.sidebar:
     except:
         indice_actual = 0
 
-    # Menú estilo "Píldora"
     seleccion = option_menu(
         menu_title=None,
         options=menu_opciones,
