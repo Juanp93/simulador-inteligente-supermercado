@@ -61,14 +61,50 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN CSS PREMIUM: RED DINÁMICA, LUCES RESPIRABLES Y GLASSMORPHISM
+# INYECCIÓN HTML PARA ESFERAS (Z-INDEX PROFUNDO)
+st.markdown("""
+<div class="bg-orb orb-1"></div>
+<div class="bg-orb orb-2"></div>
+""", unsafe_allow_html=True)
+
+# INYECCIÓN CSS PREMIUM COMPLETA
 st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
     [data-testid="stToolbar"] {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     
-    /* CAPA BASE 1: La Red Geométrica en el fondo */
+    /* ESFERAS DE LUZ (HACK HTML) */
+    .bg-orb {
+        position: fixed;
+        border-radius: 50%;
+        filter: blur(120px);
+        z-index: -999; /* Empuja las luces al fondo extremo */
+        pointer-events: none; /* Las hace invisibles a los clics del mouse */
+        animation: gravedad 12s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .orb-1 {
+        width: 700px;
+        height: 700px;
+        background: radial-gradient(circle, rgba(207, 157, 123, 0.18) 0%, rgba(207, 157, 123, 0) 65%); /* Antique Brass */
+        top: -15%;
+        left: -10%;
+    }
+    .orb-2 {
+        width: 800px;
+        height: 800px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 70%); /* Luz Blanca */
+        bottom: -10%;
+        right: -10%;
+        animation-delay: -6s; /* Ritmo asimétrico */
+    }
+    
+    @keyframes gravedad {
+        0% { transform: scale(0.85) translate(0px, 0px); opacity: 0.6; }
+        100% { transform: scale(1.15) translate(40px, -20px); opacity: 1; }
+    }
+
+    /* RED GEOMÉTRICA */
     [data-testid="stAppViewContainer"] {
         background-color: #0C1519;
         background-image: 
@@ -76,43 +112,6 @@ st.markdown("""
             linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
         background-size: 60px 60px;
         background-position: center center;
-        z-index: 0;
-    }
-    
-    /* CAPA BASE 2: Luces Respirables (Singularidades) */
-    [data-testid="stAppViewContainer"]::before, [data-testid="stAppViewContainer"]::after {
-        content: "";
-        position: fixed;
-        border-radius: 50%;
-        filter: blur(120px);
-        z-index: -1; 
-        pointer-events: none; /* Permite hacer clic a través de la luz */
-        animation: gravedad 12s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Luz 1: Antique Brass (Cobre) Arriba a la Izquierda */
-    [data-testid="stAppViewContainer"]::before {
-        width: 700px;
-        height: 700px;
-        background: radial-gradient(circle, rgba(207, 157, 123, 0.12) 0%, rgba(207, 157, 123, 0) 65%);
-        top: -15%;
-        left: -10%;
-    }
-
-    /* Luz 2: Luz Estelar Blanca Abajo a la Derecha */
-    [data-testid="stAppViewContainer"]::after {
-        width: 800px;
-        height: 800px;
-        background: radial-gradient(circle, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0) 70%);
-        bottom: -10%;
-        right: -10%;
-        animation-delay: -6s; /* Desfase para ritmo asimétrico */
-    }
-
-    /* Animación de Gravedad Visual */
-    @keyframes gravedad {
-        0% { transform: scale(0.85) translate(0px, 0px); opacity: 0.6; }
-        100% { transform: scale(1.15) translate(40px, -20px); opacity: 1; }
     }
     
     /* EFECTO GLASSMORPHISM EN TARJETAS */
@@ -124,8 +123,6 @@ st.markdown("""
         border-radius: 16px;
         color: #F3F4F6;
         box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-        position: relative;
-        z-index: 1; /* Asegura que queden encima de las luces */
     }
     .metric-container { 
         padding: 22px; 
