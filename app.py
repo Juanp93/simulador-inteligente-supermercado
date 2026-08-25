@@ -197,12 +197,15 @@ if not st.session_state.df_bruto.empty:
     col_map = {}
     for col in df_temp.columns:
         c = str(col).strip().lower()
-        if any(x in c for x in ['venta', 'sales', 'monto']): col_map[col] = 'Sales'
-        elif any(x in c for x in ['producto', 'product', 'sku']): col_map[col] = 'Product Name'
-        elif any(x in c for x in ['cantidad', 'quantity', 'cant']): col_map[col] = 'Quantity'
-        elif any(x in c for x in ['cliente', 'customer']): col_map[col] = 'Customer Name'
+        # EL CANDADO: Si ya encontró la columna, ignora las demás para evitar el choque
+        if any(x in c for x in ['venta', 'sales', 'monto']) and 'Sales' not in col_map.values(): col_map[col] = 'Sales'
+        elif any(x in c for x in ['producto', 'product', 'sku']) and 'Product Name' not in col_map.values(): col_map[col] = 'Product Name'
+        elif any(x in c for x in ['cantidad', 'quantity', 'cant']) and 'Quantity' not in col_map.values(): col_map[col] = 'Quantity'
+        elif any(x in c for x in ['cliente', 'customer']) and 'Customer Name' not in col_map.values(): col_map[col] = 'Customer Name'
             
-    df_temp = df_temp.rename(columns=col_map).loc[:, ~df_temp.columns.duplicated()] 
+    df_temp = df_temp.rename(columns=col_map)
+    df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()] 
+    
     if 'Product Name' in df_temp.columns:
         df_temp['Product Name'] = df_temp['Product Name'].replace(r'^\s*$', np.nan, regex=True)
         df_temp = df_temp.dropna(subset=['Product Name'])
@@ -212,6 +215,7 @@ if not st.session_state.df_bruto.empty:
         if 'Product Name' not in df_temp.columns: df_temp['Product Name'] = 'General'
         if 'Quantity' not in df_temp.columns: df_temp['Quantity'] = 1
         if 'Customer Name' not in df_temp.columns: df_temp['Customer Name'] = "Mostrador"
+        
         factor_multiplicador = m_factor if aplicar_conversion else 1.0
         df_temp['Sales'] = pd.to_numeric(df_temp['Sales'], errors='coerce').fillna(0) * factor_multiplicador
         df_temp['Quantity'] = pd.to_numeric(df_temp['Quantity'], errors='coerce').fillna(1)
