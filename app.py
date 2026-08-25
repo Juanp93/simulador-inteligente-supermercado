@@ -22,7 +22,7 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
     # EL ESTÁNDAR DE PRODUCCIÓN OFICIAL PARA STREAMLIT CLOUD Y GITHUB
-    modelo_ia = genai.GenerativeModel('gemini-2.5-flash')
+    modelo_ia = genai.GenerativeModel('gemini-3.6-flash')
     ia_activa = True
 except:
     ia_activa = False
