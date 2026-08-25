@@ -84,35 +84,38 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar solo herramientas de desarrollador, respetando el menú de Streamlit */
+    /* Ocultar herramientas de desarrollo de Streamlit */
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     div[data-testid="stSidebarNav"] {{display: none !important;}}
     
-    /* El video se va al fondo absoluto, sin pelear con la interfaz nativa */
+    /* El video se queda en el fondo absoluto */
     #bg-video {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        z-index: -1; object-fit: cover; opacity: 0.85; pointer-events: none;
+        z-index: -9999; object-fit: cover; opacity: 0.85; pointer-events: none;
     }}
     
-    /* Hacemos transparente SOLO el cuerpo, dejando el Header nativo quieto */
-    .stApp, [data-testid="stAppViewContainer"] {{
+    /* Transparentamos SOLO la zona de trabajo (pestañas) para que se vea el video */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
         background: transparent !important; 
         background-color: transparent !important;
     }}
     
-    /* El Header se mantiene nativo para que Streamlit dibuje su propio botón */
+    /* 🔥 LA BARRERA DE PROTECCIÓN DEL BOTÓN 🔥 
+       Le devolvemos un color sólido a la cabecera superior para que el video 
+       no se la trague, dejando que Streamlit dibuje su botón en paz. */
     [data-testid="stHeader"] {{
-        background-color: transparent !important;
+        background-color: #0E1117 !important; /* Color sólido y oscuro */
+        z-index: 99999 !important;
     }}
     
-    /* La barra lateral retiene su color oscuro corporativo, tapando el video cuando se abre */
+    /* La barra lateral retiene su color sólido corporativo */
     [data-testid="stSidebar"] {{
         background-color: #0C1519 !important; 
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
-    /* ESTILOS INTACTOS DE TUS TARJETAS Y MÉTRICAS */
+    /* ESTILOS DE TARJETAS INTACTOS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
