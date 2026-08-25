@@ -84,37 +84,39 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar herramientas de desarrollo de Streamlit */
-    [data-testid="stToolbar"] {{visibility: hidden !important;}}
-    footer {{visibility: hidden !important;}}
-    div[data-testid="stSidebarNav"] {{display: none !important;}}
-    
-    /* El video se queda en el fondo absoluto de la zona de trabajo */
+    /* 1. El video al fondo absoluto detrás de toda la aplicación */
     #bg-video {{
-        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        z-index: -9999; object-fit: cover; opacity: 0.85; pointer-events: none;
+        position: fixed; 
+        top: 0; 
+        left: 0; 
+        min-width: 100vw; 
+        min-height: 100vh;
+        z-index: -1; 
+        object-fit: cover; 
+        opacity: 0.85; 
+        pointer-events: none;
     }}
     
-    /* Transparentamos SOLO la zona de trabajo (pestañas) */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
-        background: transparent !important; 
+    /* 2. Transparencia estricta solo para dejar ver el video */
+    .stApp {{
+        background-color: transparent !important; 
+    }}
+    [data-testid="stHeader"] {{
         background-color: transparent !important;
     }}
     
-    /* 🔥 LA SOLUCIÓN EMPRESARIAL: BARRA LATERAL FIJA 🔥 */
-    /* Ocultamos permanentemente los botones de colapsar para evitar que se pierda el menú */
-    [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"] {{
-        display: none !important;
-        visibility: hidden !important;
-    }}
-    
-    /* La barra lateral retiene su color corporativo y se mantiene estable */
+    /* 3. Color sólido para tu barra lateral */
     [data-testid="stSidebar"] {{
         background-color: #0C1519 !important; 
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
-    /* ESTILOS DE TARJETAS INTACTOS */
+    /* 4. Ocultamos únicamente el menú de desarrollador de Streamlit en la esquina */
+    [data-testid="stToolbar"] {{visibility: hidden !important;}}
+    
+    /* ========================================= */
+    /* TUS TARJETAS Y MÉTRICAS (100% INTACTAS)  */
+    /* ========================================= */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
