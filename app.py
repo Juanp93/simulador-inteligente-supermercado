@@ -26,8 +26,8 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # CORRECCIÓN: Modelo oficial y actual de Google
-    modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
+    # CORRECCIÓN DEFINITIVA: Modelo universal y estable
+    modelo_ia = genai.GenerativeModel('gemini-pro')
     ia_activa = True
 except:
     ia_activa = False
@@ -244,8 +244,7 @@ with st.sidebar:
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: 
-                # AHORA SÍ TE MOSTRARÁ EL ERROR EXACTO SI FALLA
-                st.error(f"Error de conexión con IA: {e}")
+                st.error(f"Error contactando a la IA: {e}")
 
 # ==============================================================================
 # 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - INTACTO
@@ -451,7 +450,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
                         st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
                         st.rerun() 
                     except Exception as e: 
-                        # AHORA SÍ TE MOSTRARÁ EL ERROR EXACTO SI FALLA
                         st.error(f"Error contactando a la IA: {e}")
             
             if st.session_state.apuntes_ia != "":
@@ -645,7 +643,6 @@ elif st.session_state.pantalla_actual == "simulador":
                     st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
                     st.rerun()
                 except Exception as e: 
-                    # AHORA SÍ TE MOSTRARÁ EL ERROR EXACTO SI FALLA
                     st.error(f"Error contactando a la IA: {e}")
         
         if st.session_state.apuntes_ia != "":
