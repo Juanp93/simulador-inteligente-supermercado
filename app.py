@@ -78,6 +78,11 @@ Generado por: Inteligencia Comercial Automatizada
 # ==============================================================================
 enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
+# ==============================================================================
+# INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
+# ==============================================================================
+enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
+
 st.markdown(f"""
 <video autoplay muted loop playsinline id="bg-video">
   <source src="{enlace_fondo}" type="video/webm">
@@ -87,6 +92,21 @@ st.markdown(f"""
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     div[data-testid="stSidebarNav"] {{display: none !important;}}
+    
+    /* 🔥 RESCATE DEL BOTÓN DE LA BARRA LATERAL 🔥 */
+    [data-testid="collapsedControl"] {{
+        visibility: visible !important;
+        display: flex !important;
+        background-color: rgba(12, 21, 25, 0.85) !important;
+        border-radius: 8px !important;
+        padding: 5px !important;
+        z-index: 999999 !important;
+        border: 1px solid rgba(207, 157, 123, 0.4) !important;
+    }}
+    [data-testid="collapsedControl"] svg {{
+        fill: #CF9D7B !important;
+        color: #CF9D7B !important;
+    }}
     
     #bg-video {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
