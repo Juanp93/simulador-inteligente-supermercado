@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-from google import genai
+import google.generativeai as genai
 
 # ==============================================================================
 # CONFIGURACIÓN DE LA PÁGINA
@@ -38,6 +38,10 @@ st.markdown("""
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }
     .metric-container { padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }
+    .metric-success { border-left: 4px solid #00CC96; }
+    .metric-warning { border-left: 4px solid #FFA15A; }
+    .metric-danger { border-left: 4px solid #EF553B; }
+    
     .metric-title { font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
     .metric-value { font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
     .metric-caption { font-size: 12px; color: #8F95A3; line-height: 1.4; }
@@ -272,9 +276,10 @@ elif st.session_state.pantalla_actual == "diagnostico":
         
         if st.button("🤖 Generar Análisis Estratégico con IA"):
             try:
-                client = genai.Client()
+                # Código restaurado con la sintaxis correcta que ya te funcionaba
+                model = genai.GenerativeModel('gemini-1.5-flash')
                 prompt = f"Analiza estos datos de un negocio: Ventas totales {ventas_totales_global}, Ganancia neta {ganancia_neta_global}, Producto estrella {prod_estrella}. Dame 3 recomendaciones comerciales gerenciales clave en español."
-                response = client.models.generate_content(model='gemini-2.5-flash', contents=prompt)
+                response = model.generate_content(prompt)
                 st.session_state.apuntes_ia = response.text
                 st.success("¡Estrategias generadas con éxito por la IA!")
             except Exception as e:
