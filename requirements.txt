@@ -5,3 +5,4 @@ plotly
 streamlit-option-menu
 google-generativeai>=0.8.0
 xlsxwriter
+openpyxl
