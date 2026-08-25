@@ -10,7 +10,8 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
-st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
+# Agregamos initial_sidebar_state="expanded" para obligar a que la barra siempre nazca abierta
+st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
@@ -61,41 +62,47 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN HTML: VIDEO WEBM DE ALTA DEFINICIÓN EN EL FONDO
-st.markdown("""
-<video autoplay muted loop playsinline id="bg-video">
-  <source src="https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm" type="video/webm">
-</video>
-""", unsafe_allow_html=True)
+# ==============================================================================
+# INYECCIÓN HTML Y CSS: VIDEO WEBM 4K SEGURO Y NATURAL
+# ==============================================================================
+enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
-# INYECCIÓN CSS PREMIUM (SOBRE EL CÓDIGO SEGURO)
-st.markdown("""
+st.markdown(f"""
+<video autoplay muted loop playsinline id="bg-video">
+  <source src="{enlace_webm}" type="video/webm">
+</video>
+
 <style>
-    /* Ocultar botones de Streamlit en la esquina superior */
-    [data-testid="stToolbar"] {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
+    /* 1. Ocultar solo el menú de opciones superior de Streamlit */
+    [data-testid="stToolbar"] {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
     
-    /* CONFIGURACIÓN DEL VIDEO WEBM */
-    #bg-video {
+    /* 2. Video al fondo extremo, fluido y nítido */
+    #bg-video {{
         position: fixed;
         top: 0;
         left: 0;
-        min-width: 100vw;
-        min-height: 100vh;
-        z-index: -999;
+        width: 100vw;
+        height: 100vh;
+        z-index: -9999; 
         object-fit: cover;
+        opacity: 0.85; 
         pointer-events: none;
-        opacity: 0.85; /* Ajuste para legibilidad */
-    }
+    }}
 
-    /* HACER LA PARED TRANSPARENTE PARA VER EL VIDEO SIN ROMPER EL MENÚ */
-    .stApp, [data-testid="stAppViewContainer"] {
-        background-color: transparent !important;
+    /* 3. Hacer de cristal la pared principal para ver el video */
+    .stApp, [data-testid="stAppViewContainer"] {{
         background: transparent !important;
-    }
+        background-color: transparent !important;
+    }}
     
-    /* EFECTO GLASSMORPHISM EN TARJETAS */
-    .metric-container, .home-card { 
+    /* 4. Proteger la barra lateral para que no sea transparente */
+    [data-testid="stSidebar"] {{
+        background-color: #0C1519 !important;
+    }}
+    
+    /* EFECTO GLASSMORPHISM EN TARJETAS (TU DISEÑO ORIGINAL INTACTO) */
+    .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
@@ -103,32 +110,32 @@ st.markdown("""
         border-radius: 16px;
         color: #F3F4F6;
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-    }
-    .metric-container { 
+    }}
+    .metric-container {{ 
         padding: 22px; 
         margin-bottom: 15px;
         border-left: 4px solid #CF9D7B; 
-    }
-    .metric-success { border-left: 4px solid #00CC96; }
-    .metric-warning { border-left: 4px solid #FFA15A; }
-    .metric-danger { border-left: 4px solid #EF553B; }
+    }}
+    .metric-success {{ border-left: 4px solid #00CC96; }}
+    .metric-warning {{ border-left: 4px solid #FFA15A; }}
+    .metric-danger {{ border-left: 4px solid #EF553B; }}
     
-    .metric-title { font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .metric-value { font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
-    .metric-caption { font-size: 12px; color: #8F95A3; line-height: 1.4; }
+    .metric-title {{ font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .metric-value {{ font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }}
+    .metric-caption {{ font-size: 12px; color: #8F95A3; line-height: 1.4; }}
     
-    .home-card { 
+    .home-card {{ 
         padding: 30px; 
         margin-bottom: 20px; 
         text-align: center;
         transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .home-card:hover { transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }
-    .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
-    .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
+    }}
+    .home-card:hover {{ transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }}
+    .home-card h3 {{ color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }}
+    .home-card p {{ color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }}
     
-    div[data-testid="stSidebarNav"] {display: none;}
-    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }
+    div[data-testid="stSidebarNav"] {{display: none;}}
+    .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
 
