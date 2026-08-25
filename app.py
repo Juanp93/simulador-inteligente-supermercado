@@ -61,21 +61,38 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN CSS PREMIUM CON TU FONDO ANIMADO
+# INYECCIÓN DEL VIDEO WEBM FLUIDO EN EL FONDO (ENLACE OFICIAL DE TU GITHUB)
+enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
+
+st.markdown(f"""
+<video autoplay muted loop id="bg-video">
+  <source src="{enlace_webm}" type="video/webm">
+</video>
+""", unsafe_allow_html=True)
+
+# INYECCIÓN CSS PREMIUM CON ADAPTACIÓN PARA VIDEO Y TARJETAS
 st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
     [data-testid="stToolbar"] {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     
-    /* FONDO ANIMADO MAESTRO (GIF DE GITHUB) */
+    /* CONFIGURACIÓN DEL VIDEO DE FONDO EN ALTA DEFINICIÓN */
+    #bg-video {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        min-width: 100%;
+        min-height: 100%;
+        z-index: -999;
+        object-fit: cover;
+        pointer-events: none; /* Permite hacer clic a través del video */
+        opacity: 0.85; /* Ajuste perfecto para contraste con las tarjetas */
+    }
+
+    /* Forzar fondo oscuro base por si el video tarda unos milisegundos en cargar */
     [data-testid="stAppViewContainer"] {
-        background-color: #0C1519;
-        background-image: url('https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm');
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
+        background-color: #0C1519 !important;
     }
     
     /* EFECTO GLASSMORPHISM EN TARJETAS */
