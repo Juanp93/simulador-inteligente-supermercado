@@ -43,25 +43,36 @@ def df_to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
     return output.getvalue()
 
-def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia):
-    contenido = f"""====================================================
-INFORME EJECUTIVO - INTELRETAIL PRO
-====================================================
+def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, estrella, dormido):
+    contenido = f"""
+======================================================================
+              INTELRETAIL PRO - REPORTE EJECUTIVO GLOBAL
+======================================================================
+Fecha de Emisión: Reporte en Tiempo Real
+Generado por: Inteligencia Comercial Automatizada
 
-💰 RESUMEN FINANCIERO GLOBAL:
-- Ventas Totales Registradas: {simbolo}{ventas_tot:,.2f}
-- Ganancia Neta Libre Estimada: {simbolo}{ganancia_tot:,.2f}
+[ 1. ESTADO FINANCIERO DEL CATÁLOGO ]
+----------------------------------------------------------------------
+> Ventas Totales Registradas : {simbolo}{ventas_tot:,.2f}
+> Ganancia Neta Libre        : {simbolo}{ganancia_tot:,.2f}
+> Ticket Promedio por Venta  : {simbolo}{ticket:,.2f}
 
-----------------------------------------------------
-🧠 APUNTES Y ESTRATEGIAS DE INTELIGENCIA ARTIFICIAL:
-----------------------------------------------------
-{notas_ia if notas_ia != "" else "Aún no has generado estrategias con la IA en esta sesión."}
+[ 2. RENDIMIENTO DE INVENTARIO ]
+----------------------------------------------------------------------
+> Producto ESTRELLA (Top Ganancia) : {estrella}
+> Producto DORMIDO (Baja Rotación) : {dormido}
+* Nota: Revisa la Matriz ABC en la plataforma para detalles de stock.
 
-====================================================
-Generado automáticamente por tu copiloto IntelRetail Pro.
+[ 3. ESTRATEGIAS Y APUNTES DE INTELIGENCIA ARTIFICIAL ]
+----------------------------------------------------------------------
+{notas_ia if notas_ia != "" else "No se solicitaron estrategias a la IA durante esta sesión."}
+
+======================================================================
+     Gracias por utilizar IntelRetail Pro - Tu Copiloto Estratégico.
+======================================================================
 """
     return contenido.encode('utf-8')
-
+    
 # ==============================================================================
 # INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
 # ==============================================================================
@@ -369,7 +380,7 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.subheader("💾 Exportar Datos")
             st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
             st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
-            txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia)
+            txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia, ticket_promedio, prod_estrella, prod_dormido)
             st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
         with col_ia:
