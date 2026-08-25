@@ -71,7 +71,7 @@ st.markdown("""
     /* FONDO ANIMADO MAESTRO (GIF DE GITHUB) */
     [data-testid="stAppViewContainer"] {
         background-color: #0C1519;
-        background-image: url('https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif3.gif');
+        background-image: url('https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm');
         background-size: cover;
         background-position: center center;
         background-repeat: no-repeat;
