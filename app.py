@@ -10,8 +10,12 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
-# Forzamos la barra a abrir por defecto, de forma 100% nativa.
+# Obligamos a que la barra siempre nazca abierta de forma nativa
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
+
+if "inicio_sesion_nuevo" not in st.session_state:
+    st.session_state.pantalla_actual = "home"
+    st.session_state.inicio_sesion_nuevo = True
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
@@ -63,24 +67,17 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
     return contenido.encode('utf-8')
 
 # ==============================================================================
-# INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
+# INYECCIÓN HTML Y CSS: VIDEO WEBM 4K CON NAVEGACIÓN SEGURA
 # ==============================================================================
-
-# IMPORTANTE: Reemplaza este enlace con el de tu fondo dorado que se ve increíble.
-enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
+enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
 st.markdown(f"""
 <video autoplay muted loop playsinline id="bg-video">
-  <source src="{enlace_fondo}" type="video/webm">
+  <source src="{enlace_webm}" type="video/webm">
 </video>
 
 <style>
-    /* Ocultar solo herramientas molestas, dejando intacto el menú lateral */
-    [data-testid="stToolbar"] {{visibility: hidden !important;}}
-    footer {{visibility: hidden !important;}}
-    div[data-testid="stSidebarNav"] {{display: none !important;}}
-    
-    /* Configuración del fondo animado respetando el sistema */
+    /* 1. Video al fondo extremo, fluido y nítido */
     #bg-video {{
         position: fixed;
         top: 0;
@@ -93,19 +90,23 @@ st.markdown(f"""
         pointer-events: none;
     }}
 
-    /* Hacer transparente el lienzo principal pero SIN TOCAR los botones nativos */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+    /* 2. Hacer transparente SOLO el lienzo trasero de la app, DEJANDO INTACTOS LOS BOTONES */
+    .stApp {{
         background: transparent !important;
         background-color: transparent !important;
     }}
     
-    /* Asegurar que la barra lateral no se vuelva transparente y se pueda leer */
+    /* 3. Asegurar que la barra lateral tenga un fondo oscuro para que el texto se lea bien */
     [data-testid="stSidebar"] {{
-        background-color: #0C1519 !important;
+        background-color: rgba(12, 21, 25, 0.95) !important;
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
-    /* EFECTO GLASSMORPHISM EN TARJETAS */
+    /* 4. Ocultar la firma de streamlit abajo y la navegación por defecto (porque usamos la tuya premium) */
+    footer {{visibility: hidden !important;}}
+    div[data-testid="stSidebarNav"] {{display: none !important;}}
+    
+    /* 5. EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
@@ -168,6 +169,7 @@ with st.sidebar:
         icons=menu_iconos,
         menu_icon="cast",
         default_index=indice_actual,
+        key="menu_lateral_estrategico",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
