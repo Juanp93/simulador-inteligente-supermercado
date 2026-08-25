@@ -89,27 +89,26 @@ st.markdown(f"""
     footer {{visibility: hidden !important;}}
     div[data-testid="stSidebarNav"] {{display: none !important;}}
     
-    /* El video se queda en el fondo absoluto */
+    /* El video se queda en el fondo absoluto de la zona de trabajo */
     #bg-video {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
         z-index: -9999; object-fit: cover; opacity: 0.85; pointer-events: none;
     }}
     
-    /* Transparentamos SOLO la zona de trabajo (pestañas) para que se vea el video */
+    /* Transparentamos SOLO la zona de trabajo (pestañas) */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stMain"] {{
         background: transparent !important; 
         background-color: transparent !important;
     }}
     
-    /* 🔥 LA BARRERA DE PROTECCIÓN DEL BOTÓN 🔥 
-       Le devolvemos un color sólido a la cabecera superior para que el video 
-       no se la trague, dejando que Streamlit dibuje su botón en paz. */
-    [data-testid="stHeader"] {{
-        background-color: #0E1117 !important; /* Color sólido y oscuro */
-        z-index: 99999 !important;
+    /* 🔥 LA SOLUCIÓN EMPRESARIAL: BARRA LATERAL FIJA 🔥 */
+    /* Ocultamos permanentemente los botones de colapsar para evitar que se pierda el menú */
+    [data-testid="stSidebarCollapseButton"], [data-testid="collapsedControl"] {{
+        display: none !important;
+        visibility: hidden !important;
     }}
     
-    /* La barra lateral retiene su color sólido corporativo */
+    /* La barra lateral retiene su color corporativo y se mantiene estable */
     [data-testid="stSidebar"] {{
         background-color: #0C1519 !important; 
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
