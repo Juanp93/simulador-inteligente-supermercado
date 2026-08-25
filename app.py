@@ -84,45 +84,35 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar elementos innecesarios */
+    /* Ocultar solo herramientas de desarrollador, respetando el menú de Streamlit */
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     div[data-testid="stSidebarNav"] {{display: none !important;}}
     
-    /* Fondo global y video */
+    /* El video se va al fondo absoluto, sin pelear con la interfaz nativa */
     #bg-video {{
         position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-        z-index: -9999; object-fit: cover; opacity: 0.85; pointer-events: none;
+        z-index: -1; object-fit: cover; opacity: 0.85; pointer-events: none;
     }}
     
-    /* Hacer transparente el contenedor principal y el header */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+    /* Hacemos transparente SOLO el cuerpo, dejando el Header nativo quieto */
+    .stApp, [data-testid="stAppViewContainer"] {{
         background: transparent !important; 
         background-color: transparent !important;
     }}
     
-    /* 🔥 EL RESCATE DEFINITIVO DEL BOTÓN 🔥 */
+    /* El Header se mantiene nativo para que Streamlit dibuje su propio botón */
     [data-testid="stHeader"] {{
-        z-index: 99999 !important; /* Trae la cabecera completa por encima del video */
+        background-color: transparent !important;
     }}
     
-    [data-testid="collapsedControl"] {{
-        display: flex !important;
-        visibility: visible !important;
-        background-color: rgba(12, 21, 25, 0.7) !important;
-        border-radius: 8px !important;
-        border: 1px solid rgba(207, 157, 123, 0.5) !important;
-    }}
-    
-    [data-testid="collapsedControl"] svg {{
-        fill: #CF9D7B !important;
-        color: #CF9D7B !important;
-    }}
-    
-    /* Estilos de la Sidebar y tarjetas (Todo intacto) */
+    /* La barra lateral retiene su color oscuro corporativo, tapando el video cuando se abre */
     [data-testid="stSidebar"] {{
-        background-color: #0C1519 !important; border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
+        background-color: #0C1519 !important; 
+        border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
+    
+    /* ESTILOS INTACTOS DE TUS TARJETAS Y MÉTRICAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
@@ -144,6 +134,7 @@ st.markdown(f"""
     .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
+
 
 
 def stream_gemini(respuesta):
