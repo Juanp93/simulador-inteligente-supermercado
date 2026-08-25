@@ -1,30 +1,4 @@
 import streamlit as st
-
-st.markdown(
-    """
-    <style>
-    /* Fondo general de la aplicación */
-    .stApp {
-        background-color: #0b0f19; /* O la URL de tu imagen/degradado de fondo */
-        background-image: linear-gradient(to bottom right, #0b0f19, #111827);
-        background-attachment: fixed;
-    }
-
-    /* Asegurar que el contenedor principal sea transparente para que se vea el fondo */
-    .block-container {
-        background: transparent !important;
-    }
-
-    /* Ajuste para las tarjetas o contenedores internos si es necesario */
-    div.stMarkdown {
-        background: transparent;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
@@ -87,42 +61,47 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN DEL VIDEO WEBM FLUIDO EN EL FONDO (ENLACE OFICIAL DE TU GITHUB)
+# ==============================================================================
+# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM
+# ==============================================================================
 enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
 st.markdown(f"""
-<video autoplay muted loop id="bg-video">
+<video autoplay muted loop playsinline id="bg-video">
   <source src="{enlace_webm}" type="video/webm">
 </video>
-""", unsafe_allow_html=True)
 
-# INYECCIÓN CSS PREMIUM CON ADAPTACIÓN PARA VIDEO Y TARJETAS
-st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
-    [data-testid="stToolbar"] {visibility: hidden !important;}
-    footer {visibility: hidden !important;}
+    [data-testid="stToolbar"] {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
     
-    /* CONFIGURACIÓN DEL VIDEO DE FONDO EN ALTA DEFINICIÓN */
-    #bg-video {
+    /* 1. CONFIGURACIÓN DEL VIDEO DE FONDO EN ALTA DEFINICIÓN */
+    #bg-video {{
         position: fixed;
-        right: 0;
-        bottom: 0;
-        min-width: 100%;
-        min-height: 100%;
-        z-index: -999;
+        top: 0;
+        left: 0;
+        min-width: 100vw;
+        min-height: 100vh;
+        z-index: -999; /* Lo empuja al fondo */
         object-fit: cover;
         pointer-events: none; /* Permite hacer clic a través del video */
         opacity: 0.85; /* Ajuste perfecto para contraste con las tarjetas */
-    }
+    }}
 
-    /* Forzar fondo oscuro base por si el video tarda unos milisegundos en cargar */
-    [data-testid="stAppViewContainer"] {
-        background-color: #0C1519 !important;
-    }
+    /* 2. HACER TRANSPARENTE EL MURO DE STREAMLIT PARA VER EL VIDEO */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+    }}
     
-    /* EFECTO GLASSMORPHISM EN TARJETAS */
-    .metric-container, .home-card { 
+    /* 3. PROTEGER EL COLOR DE LA BARRA LATERAL PARA QUE NO SE VUELVA TRANSPARENTE */
+    [data-testid="stSidebar"] {{
+        background-color: #0C1519 !important;
+    }}
+    
+    /* 4. EFECTO GLASSMORPHISM EN TARJETAS */
+    .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
@@ -130,32 +109,32 @@ st.markdown("""
         border-radius: 16px;
         color: #F3F4F6;
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
-    }
-    .metric-container { 
+    }}
+    .metric-container {{ 
         padding: 22px; 
         margin-bottom: 15px;
         border-left: 4px solid #CF9D7B; 
-    }
-    .metric-success { border-left: 4px solid #00CC96; }
-    .metric-warning { border-left: 4px solid #FFA15A; }
-    .metric-danger { border-left: 4px solid #EF553B; }
+    }}
+    .metric-success {{ border-left: 4px solid #00CC96; }}
+    .metric-warning {{ border-left: 4px solid #FFA15A; }}
+    .metric-danger {{ border-left: 4px solid #EF553B; }}
     
-    .metric-title { font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
-    .metric-value { font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }
-    .metric-caption { font-size: 12px; color: #8F95A3; line-height: 1.4; }
+    .metric-title {{ font-size: 12px; color: #CF9D7B; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+    .metric-value {{ font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }}
+    .metric-caption {{ font-size: 12px; color: #8F95A3; line-height: 1.4; }}
     
-    .home-card { 
+    .home-card {{ 
         padding: 30px; 
         margin-bottom: 20px; 
         text-align: center;
         transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .home-card:hover { transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }
-    .home-card h3 { color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }
-    .home-card p { color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }
+    }}
+    .home-card:hover {{ transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }}
+    .home-card h3 {{ color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }}
+    .home-card p {{ color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }}
     
-    div[data-testid="stSidebarNav"] {display: none;}
-    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }
+    div[data-testid="stSidebarNav"] {{display: none;}}
+    .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
 
