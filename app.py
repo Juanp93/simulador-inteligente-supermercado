@@ -10,7 +10,6 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
-# Forzamos la barra a abrir por defecto, de forma 100% nativa.
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
@@ -22,7 +21,7 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # EL MOTOR CORRECTO Y ESTABLE PARA EVITAR LOS LÍMITES ESTRICTOS (Sincronizado con Vercel)
+    # EL ESTÁNDAR DE PRODUCCIÓN OFICIAL PARA STREAMLIT CLOUD Y GITHUB
     modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
     ia_activa = True
 except:
@@ -243,7 +242,7 @@ with st.sidebar:
             except Exception as e: 
                 error_str = str(e)
                 if "429" in error_str or "quota" in error_str.lower():
-                    st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                    st.error("⏳ Límite de cuota alcanzado en la nube. Por favor, verifica los detalles de tu plan o API Key en Google AI Studio.")
                 else:
                     st.error(f"Error de conexión con IA: {e}")
 
@@ -453,9 +452,9 @@ elif st.session_state.pantalla_actual == "diagnostico":
                     except Exception as e: 
                         error_str = str(e)
                         if "429" in error_str or "quota" in error_str.lower():
-                            st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                            st.error("⏳ Límite de cuota alcanzado. Por favor, verifica el plan o cuota de la API Key configurada en la nube.")
                         else:
-                            st.error(f"Error de conexión con IA: {e}")
+                            st.error(f"Error contactando a la IA: {e}")
             
             if st.session_state.apuntes_ia != "":
                 st.write("")
@@ -650,7 +649,7 @@ elif st.session_state.pantalla_actual == "simulador":
                 except Exception as e: 
                     error_str = str(e)
                     if "429" in error_str or "quota" in error_str.lower():
-                        st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                        st.error("⏳ Límite de cuota alcanzado en la nube. Por favor, verifica los detalles de tu plan o API Key en Google AI Studio.")
                     else:
                         st.error(f"Error de conexión con IA: {e}")
         
