@@ -1,4 +1,30 @@
 import streamlit as st
+
+st.markdown(
+    """
+    <style>
+    /* Fondo general de la aplicación */
+    .stApp {
+        background-color: #0b0f19; /* O la URL de tu imagen/degradado de fondo */
+        background-image: linear-gradient(to bottom right, #0b0f19, #111827);
+        background-attachment: fixed;
+    }
+
+    /* Asegurar que el contenedor principal sea transparente para que se vea el fondo */
+    .block-container {
+        background: transparent !important;
+    }
+
+    /* Ajuste para las tarjetas o contenedores internos si es necesario */
+    div.stMarkdown {
+        background: transparent;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
