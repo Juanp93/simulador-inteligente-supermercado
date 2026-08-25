@@ -21,7 +21,7 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # EL ESTÁNDAR DE PRODUCCIÓN OFICIAL PARA STREAMLIT CLOUD Y GITHUB
+    # EL MOTOR OFICIAL Y ESTABLE EXIGIDO POR GOOGLE
     modelo_ia = genai.GenerativeModel('gemini-3.6-flash')
     ia_activa = True
 except:
@@ -65,7 +65,6 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 # ==============================================================================
 # INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
 # ==============================================================================
-
 enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
 st.markdown(f"""
@@ -74,51 +73,26 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar solo herramientas molestas, dejando intacto el menú lateral */
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     div[data-testid="stSidebarNav"] {{display: none !important;}}
     
-    /* Configuración del fondo animado respetando el sistema */
     #bg-video {{
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100vw;
-        height: 100vh;
-        z-index: -9999; 
-        object-fit: cover;
-        opacity: 0.85; 
-        pointer-events: none;
+        position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+        z-index: -9999; object-fit: cover; opacity: 0.85; pointer-events: none;
     }}
-
-    /* Hacer transparente el lienzo principal pero SIN TOCAR los botones nativos */
     .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
-        background: transparent !important;
-        background-color: transparent !important;
+        background: transparent !important; background-color: transparent !important;
     }}
-    
-    /* Asegurar que la barra lateral no se vuelva transparente y se pueda leer */
     [data-testid="stSidebar"] {{
-        background-color: #0C1519 !important;
-        border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
+        background-color: #0C1519 !important; border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
-    
-    /* EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(114, 75, 57, 0.35);
-        border-radius: 16px;
-        color: #F3F4F6;
-        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(114, 75, 57, 0.35); border-radius: 16px; color: #F3F4F6; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }}
-    .metric-container {{ 
-        padding: 22px; 
-        margin-bottom: 15px;
-        border-left: 4px solid #CF9D7B; 
-    }}
+    .metric-container {{ padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }}
     .metric-success {{ border-left: 4px solid #00CC96; }}
     .metric-warning {{ border-left: 4px solid #FFA15A; }}
     .metric-danger {{ border-left: 4px solid #EF553B; }}
@@ -127,16 +101,10 @@ st.markdown(f"""
     .metric-value {{ font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }}
     .metric-caption {{ font-size: 12px; color: #8F95A3; line-height: 1.4; }}
     
-    .home-card {{ 
-        padding: 30px; 
-        margin-bottom: 20px; 
-        text-align: center;
-        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-    }}
+    .home-card {{ padding: 30px; margin-bottom: 20px; text-align: center; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }}
     .home-card:hover {{ transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }}
     .home-card h3 {{ color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }}
     .home-card p {{ color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }}
-    
     .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
@@ -146,7 +114,7 @@ def stream_gemini(respuesta):
         if chunk.text: yield chunk.text
 
 # ==============================================================================
-# 2. BARRA LATERAL (NUEVO MENÚ PREMIUM) Y CHATBOT
+# 2. BARRA LATERAL Y CHATBOT
 # ==============================================================================
 with st.sidebar:
     st.markdown("<h3 style='text-align: center; color: white; margin-bottom: 5px;'>🚀 IntelRetail Pro<br><span style='font-size: 14px; color: #CF9D7B; font-weight: 500;'>Strategic Console</span></h3>", unsafe_allow_html=True)
@@ -156,17 +124,11 @@ with st.sidebar:
     menu_iconos = ["house", "lightning", "search", "sliders", "bullseye"]
     menu_ids = ["home", "express", "diagnostico", "simulador", "objetivos"]
     
-    try:
-        indice_actual = menu_ids.index(st.session_state.pantalla_actual)
-    except:
-        indice_actual = 0
+    try: indice_actual = menu_ids.index(st.session_state.pantalla_actual)
+    except: indice_actual = 0
 
     seleccion = option_menu(
-        menu_title=None,
-        options=menu_opciones,
-        icons=menu_iconos,
-        menu_icon="cast",
-        default_index=indice_actual,
+        menu_title=None, options=menu_opciones, icons=menu_iconos, menu_icon="cast", default_index=indice_actual,
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
@@ -181,7 +143,6 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    
     st.markdown("<p style='font-size: 12px; color: #CF9D7B; font-weight: bold; margin-bottom: 0px;'>DIVISA ACTIVA</p>", unsafe_allow_html=True)
     selector_moneda = st.selectbox("Divisa a mostrar:", ["COP (Pesos Colombianos)", "USD (Dólares)", "MXN (Pesos Mexicanos)"], label_visibility="collapsed")
     if selector_moneda == "COP (Pesos Colombianos)": m_factor, m_simbolo, m_sufijo = st.number_input("Tasa (1 USD = X COP):", 100.0, value=4000.0, step=50.0), "$", " COP"
@@ -189,21 +150,14 @@ with st.sidebar:
     else: m_factor, m_simbolo, m_sufijo = 1.0, "$", " USD"
 
     aplicar_conversion = st.checkbox("🔄 Convertir datos del archivo", help="Marca esta casilla SOLO si tu archivo Excel está en una moneda diferente.", value=False)
-
     st.markdown("---")
-    
     st.markdown("<p style='font-size: 12px; color: #CF9D7B; font-weight: bold; margin-bottom: 0px;'>INGESTA DE DATOS</p>", unsafe_allow_html=True)
     st.download_button("📥 Descargar Plantilla", generar_plantilla_excel(), "plantilla.xlsx", use_container_width=True)
     
     with st.expander("⚠️ Requisitos del archivo", expanded=False):
-        st.markdown("""
-        1. **Números puros:** No escribas letras ni signos de moneda.
-        2. **Títulos claros:** Usa nombres lógicos en la fila 1 (Ej: *Ventas*, *Producto*).
-        3. **Sin Totales:** Sube la base de datos cruda.
-        """)
+        st.markdown("1. **Números puros:** Sin signos de moneda.\n2. **Títulos claros:** En fila 1 (Ej: *Ventas*).\n3. **Sin Totales:** Base de datos cruda.")
 
     archivo = st.file_uploader("Sube tus ventas aquí (.csv o .xlsx):", type=['csv', 'xlsx'])
-    
     if archivo:
         if archivo.name.endswith('.xlsx'): st.session_state.df_bruto = pd.read_excel(archivo)
         else: st.session_state.df_bruto = pd.read_csv(archivo)
@@ -211,11 +165,9 @@ with st.sidebar:
 
     st.markdown('<div class="sidebar-chat"></div>', unsafe_allow_html=True)
     st.subheader("💬 Asistente IA")
-    
     chat_container = st.container(height=300)
     
-    if not ia_activa:
-        chat_container.error("⚠️ Falta API Key")
+    if not ia_activa: chat_container.error("⚠️ Falta API Key")
     else:
         for msg in st.session_state.historial_chat:
             with chat_container.chat_message(msg["role"]): st.write(msg["content"])
@@ -224,15 +176,8 @@ with st.sidebar:
     if pregunta and ia_activa:
         st.session_state.historial_chat.append({"role": "user", "content": pregunta})
         with chat_container.chat_message("user"): st.write(pregunta)
-        
         resumen_datos = st.session_state.df_bruto.head(10).to_string() if not st.session_state.df_bruto.empty else "Sin datos"
-        prompt_experto = f"""
-        Eres el Asesor IA de IntelRetail Pro. 
-        Pantalla actual: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}.
-        Datos: {resumen_datos}
-        Actúa como consultor experto. Identifica el nicho del negocio y adapta tus recomendaciones.
-        Responde breve y muy práctico a: {pregunta}
-        """
+        prompt_experto = f"Eres el Asesor IA de IntelRetail Pro. Pantalla: {st.session_state.pantalla_actual}. Divisa: {selector_moneda}. Datos: {resumen_datos}. Actúa como consultor experto. Responde breve a: {pregunta}"
         with chat_container.chat_message("assistant"):
             try:
                 respuesta = modelo_ia.generate_content(prompt_experto, stream=True)
@@ -240,20 +185,15 @@ with st.sidebar:
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: 
-                error_str = str(e)
-                if "429" in error_str or "quota" in error_str.lower():
-                    st.error("⏳ Límite de cuota alcanzado en la nube. Por favor, verifica los detalles de tu plan o API Key en Google AI Studio.")
-                else:
-                    st.error(f"Error de conexión con IA: {e}")
+                if "429" in str(e) or "quota" in str(e).lower(): st.error("⏳ Límite de cuota alcanzado. Verifica tu API Key.")
+                else: st.error(f"Error de conexión con IA: {e}")
 
 # ==============================================================================
-# 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - INTACTO
+# 3. PROCESAMIENTO MATEMÁTICO (GLOBAL)
 # ==============================================================================
 df_final = pd.DataFrame()
-
 if not st.session_state.df_bruto.empty:
-    df_temp = st.session_state.df_bruto.copy()
-    df_temp = df_temp.dropna(how='all')
+    df_temp = st.session_state.df_bruto.copy().dropna(how='all')
     col_map = {}
     for col in df_temp.columns:
         c = str(col).strip().lower()
@@ -262,14 +202,11 @@ if not st.session_state.df_bruto.empty:
         elif any(x in c for x in ['cantidad', 'quantity', 'cant']): col_map[col] = 'Quantity'
         elif any(x in c for x in ['cliente', 'customer']): col_map[col] = 'Customer Name'
             
-    df_temp = df_temp.rename(columns=col_map)
-    df_temp = df_temp.loc[:, ~df_temp.columns.duplicated()] 
-    
+    df_temp = df_temp.rename(columns=col_map).loc[:, ~df_temp.columns.duplicated()] 
     if 'Product Name' in df_temp.columns:
         df_temp['Product Name'] = df_temp['Product Name'].replace(r'^\s*$', np.nan, regex=True)
         df_temp = df_temp.dropna(subset=['Product Name'])
-        filtro_totales = df_temp['Product Name'].astype(str).str.lower().str.contains('total', na=False)
-        df_temp = df_temp[~filtro_totales]
+        df_temp = df_temp[~df_temp['Product Name'].astype(str).str.lower().str.contains('total', na=False)]
     
     if 'Sales' in df_temp.columns:
         if 'Product Name' not in df_temp.columns: df_temp['Product Name'] = 'General'
@@ -392,10 +329,8 @@ elif st.session_state.pantalla_actual == "diagnostico":
                             st.session_state.costos_editados = df_cargado
                             st.success("✅ ¡Costos restaurados exitosamente!")
                             st.rerun() 
-                        else:
-                            st.error("❌ El archivo no tiene las columnas correctas.")
-                    except Exception as e:
-                        st.error("❌ Archivo no válido o corrupto.")
+                        else: st.error("❌ El archivo no tiene las columnas correctas.")
+                    except Exception as e: st.error("❌ Archivo no válido o corrupto.")
         
         df_g = df_final.groupby('Product Name').agg({'Quantity': 'sum', 'Sales': 'sum', 'Ganancia_Neta': 'sum'}).reset_index()
         ticket_promedio = df_final['Sales'].sum() / len(df_final) if len(df_final) > 0 else 0
@@ -404,7 +339,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
         
         st.markdown("---")
         st.subheader("🏆 2. Métricas Clave (Análisis Humano)")
-        
         c_top1, c_top2 = st.columns(2)
         with c_top1:
             st.markdown(f'<div class="metric-container"><div class="metric-title">VENTAS TOTALES REGISTRADAS</div><div class="metric-value">{m_simbolo}{ventas_totales_global:,.2f}</div><div class="metric-caption">Suma total de todos los ingresos en tu base de datos.</div></div>', unsafe_allow_html=True)
@@ -427,12 +361,10 @@ elif st.session_state.pantalla_actual == "diagnostico":
         
         st.markdown("---")
         col_export, col_ia = st.columns(2)
-        
         with col_export:
             st.subheader("💾 Exportar Datos")
             st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
             st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
-            
             txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia)
             st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
@@ -450,11 +382,8 @@ elif st.session_state.pantalla_actual == "diagnostico":
                         st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
                         st.rerun() 
                     except Exception as e: 
-                        error_str = str(e)
-                        if "429" in error_str or "quota" in error_str.lower():
-                            st.error("⏳ Límite de cuota alcanzado. Por favor, verifica el plan o cuota de la API Key configurada en la nube.")
-                        else:
-                            st.error(f"Error contactando a la IA: {e}")
+                        if "429" in str(e) or "quota" in str(e).lower(): st.error("⏳ Límite de cuota alcanzado. Verifica tu API Key en la nube.")
+                        else: st.error(f"Error contactando a la IA: {e}")
             
             if st.session_state.apuntes_ia != "":
                 st.write("")
@@ -494,13 +423,10 @@ elif st.session_state.pantalla_actual == "simulador":
         c1, c2, c3, c4 = st.columns(4)
         
         precio = c1.slider("Ajuste de Precios (%)", -50, 50, 0)
-        
         step_val = int(5 * m_factor)     
         pauta = c2.number_input(f"Presupuesto Pauta ({m_sufijo})", min_value=0, value=0, step=step_val)
-        
-        costo_lead = c3.number_input(f"Costo por Mensaje/Contacto ({m_sufijo})", min_value=0.1, value=2000.0 if m_sufijo == " COP" else 0.5, help="¿Cuánto estimas que te cuesta hacer que un cliente nuevo te escriba al WhatsApp o pregunte por un producto?")
-        
-        tasa_conversion = c4.slider("% de Cierre de Ventas", 1.0, 100.0, 5.0, 0.5, help="De cada 100 personas que te preguntan, ¿cuántas terminan comprando realmente?")
+        costo_lead = c3.number_input(f"Costo por Mensaje/Contacto ({m_sufijo})", min_value=0.1, value=2000.0 if m_sufijo == " COP" else 0.5, help="¿Cuánto cuesta que te escriban al WhatsApp?")
+        tasa_conversion = c4.slider("% de Cierre de Ventas", 1.0, 100.0, 5.0, 0.5, help="De 100 personas, ¿cuántas compran?")
         
         factor_precio = 1 + (precio / 100)
         factor_cantidad = 1 - (precio / 100 * 0.5) 
@@ -508,14 +434,12 @@ elif st.session_state.pantalla_actual == "simulador":
         leads_generados = int(pauta / costo_lead) if costo_lead > 0 else 0
         clientes_reales = int(leads_generados * (tasa_conversion / 100))
         
-        st.info(f"💡 **Proyección de Campaña:** Con este presupuesto, es **posible** que atraigas aproximadamente **{leads_generados} mensajes o contactos potenciales**. Si mantienes un nivel de cierre de ventas del {tasa_conversion}%, **podrías** conseguir **{clientes_reales} clientes nuevos**.")
+        st.info(f"💡 **Proyección:** Con este presupuesto, podrías atraer **{leads_generados} mensajes potenciales**. Si mantienes un cierre del {tasa_conversion}%, conseguirías **{clientes_reales} clientes nuevos**.")
         
-        if st.session_state.costos_editados.empty:
-            costo_promedio_porcentaje = 0.70
+        if st.session_state.costos_editados.empty: costo_promedio_porcentaje = 0.70
         else:
             costo_promedio_porcentaje = st.session_state.costos_editados['Costo (%)'].mean() / 100
-            if pd.isna(costo_promedio_porcentaje): 
-                costo_promedio_porcentaje = 0.70
+            if pd.isna(costo_promedio_porcentaje): costo_promedio_porcentaje = 0.70
 
         ventas_actuales_tot = df_final['Sales'].sum()
         costo_actual_tot = (df_final['Sales'] * costo_promedio_porcentaje).sum()
@@ -529,17 +453,8 @@ elif st.session_state.pantalla_actual == "simulador":
         col_esc1, col_esc2 = st.columns(2)
         with col_esc1:
             if st.button("💾 Guardar como Escenario A", use_container_width=True):
-                st.session_state.escenario_a = {
-                    'Ajuste_Precios': precio,
-                    'Pauta': pauta,
-                    'Costo_Lead': costo_lead,
-                    'Conversion': tasa_conversion,
-                    'Clientes_Nuevos': clientes_reales,
-                    'Ventas': v_sim,
-                    'Costo_Inv': c_sim,
-                    'Ganancia': g_sim
-                }
-                st.success("✅ ¡Escenario A guardado! Ahora mueve las palancas para armar tu Plan B y compáralos en la gráfica y en el Excel.")
+                st.session_state.escenario_a = {'Ajuste_Precios': precio, 'Pauta': pauta, 'Costo_Lead': costo_lead, 'Conversion': tasa_conversion, 'Clientes_Nuevos': clientes_reales, 'Ventas': v_sim, 'Costo_Inv': c_sim, 'Ganancia': g_sim}
+                st.success("✅ ¡Escenario A guardado! Ahora mueve las palancas para armar tu Plan B.")
         with col_esc2:
             if st.session_state.escenario_a is not None:
                 if st.button("🗑️ Borrar Escenario A", use_container_width=True):
@@ -559,99 +474,76 @@ elif st.session_state.pantalla_actual == "simulador":
         st.plotly_chart(fig, use_container_width=True)
 
         export_data = {
-            "Métrica / Parámetro": [
-                "[ PARÁMETROS ESTRATÉGICOS ]",
-                "Ajuste de Precios (%)",
-                f"Presupuesto Pauta ({m_sufijo.strip()})",
-                f"Costo por Mensaje/Contacto ({m_sufijo.strip()})",
-                "% de Cierre de Ventas",
-                "Nuevos Clientes Estimados",
-                "",
-                "[ RESULTADOS FINANCIEROS ]",
-                "Ventas Totales Brutas",
-                "Costo de Inventario (Estimado)",
-                "Inversión en Publicidad",
-                "Ganancia Neta Libre"
-            ],
-            "Escenario Actual (Realidad)": [
-                "", "0%", 0, "N/A", "N/A", "N/A", "", "",
-                ventas_actuales_tot,
-                costo_actual_tot,
-                0,
-                ganancia_actual_tot
-            ]
+            "Métrica / Parámetro": [ "[ PARÁMETROS ESTRATÉGICOS ]", "Ajuste de Precios (%)", f"Presupuesto Pauta ({m_sufijo.strip()})", f"Costo Lead ({m_sufijo.strip()})", "% de Cierre", "Clientes Estimados", "", "[ RESULTADOS ]", "Ventas Totales Brutas", "Costo de Inventario", "Inversión en Publicidad", "Ganancia Neta Libre"],
+            "Escenario Actual (Realidad)": [ "", "0%", 0, "N/A", "N/A", "N/A", "", "", ventas_actuales_tot, costo_actual_tot, 0, ganancia_actual_tot]
         }
 
         if st.session_state.escenario_a is not None:
-            export_data["Escenario A (Guardado)"] = [
-                "",
-                f"{st.session_state.escenario_a['Ajuste_Precios']}%",
-                st.session_state.escenario_a['Pauta'],
-                st.session_state.escenario_a['Costo_Lead'],
-                f"{st.session_state.escenario_a['Conversion']}%",
-                st.session_state.escenario_a['Clientes_Nuevos'],
-                "", "",
-                st.session_state.escenario_a['Ventas'],
-                st.session_state.escenario_a['Costo_Inv'],
-                st.session_state.escenario_a['Pauta'],
-                st.session_state.escenario_a['Ganancia']
-            ]
+            export_data["Escenario A (Guardado)"] = [ "", f"{st.session_state.escenario_a['Ajuste_Precios']}%", st.session_state.escenario_a['Pauta'], st.session_state.escenario_a['Costo_Lead'], f"{st.session_state.escenario_a['Conversion']}%", st.session_state.escenario_a['Clientes_Nuevos'], "", "", st.session_state.escenario_a['Ventas'], st.session_state.escenario_a['Costo_Inv'], st.session_state.escenario_a['Pauta'], st.session_state.escenario_a['Ganancia'] ]
 
-        export_data["Escenario Vivo (Proyección)"] = [
-            "",
-            f"{precio}%", pauta, costo_lead, f"{tasa_conversion}%", clientes_reales,
-            "", "",
-            v_sim, c_sim, pauta, g_sim
-        ]
+        export_data["Escenario Vivo (Proyección)"] = [ "", f"{precio}%", pauta, costo_lead, f"{tasa_conversion}%", clientes_reales, "", "", v_sim, c_sim, pauta, g_sim ]
 
-        df_sim_export = pd.DataFrame(export_data)
-        st.download_button(label="📥 Descargar Comparativo de Simulación (Excel)", data=df_to_excel(df_sim_export), file_name='proyeccion_simulador_completa.xlsx', mime='application/vnd.ms-excel')
+        st.download_button(label="📥 Descargar Comparativo de Simulación (Excel)", data=df_to_excel(pd.DataFrame(export_data)), file_name='proyeccion_simulador_completa.xlsx', mime='application/vnd.ms-excel')
         
         st.markdown("---")
         st.subheader("📱 2. Distribución Estratégica de Pauta")
         if pauta > 0:
             pauta_usd = pauta / m_factor
-            if pauta_usd < 40:
-                plataformas, valores, colores = ['Meta (Instagram/Facebook)'], [pauta], ['#E1306C']
-                st.info("💡 **Micro-Presupuesto:** 100% a **Meta Ads (Instagram/FB)**. Evitamos diluir tu dinero.")
-            elif pauta_usd < 150:
-                plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)'], [pauta * 0.70, pauta * 0.30], ['#E1306C', '#4285F4']
-                st.info("💡 **Multicanal Moderada:** 70% visual en **Meta** + 30% en **Google Ads**.")
-            else:
-                plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads'], [pauta * 0.50, pauta * 0.30, pauta * 0.20], ['#E1306C', '#4285F4', '#00F2FE'] 
-                st.info("💡 **Integral Omnicanal:** Tu presupuesto alcanza para **TikTok Ads** (20%), **Meta** (50%) y **Google** (30%).")
+            if pauta_usd < 40: plataformas, valores, colores = ['Meta (Instagram/Facebook)'], [pauta], ['#E1306C']
+            elif pauta_usd < 150: plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)'], [pauta * 0.70, pauta * 0.30], ['#E1306C', '#4285F4']
+            else: plataformas, valores, colores = ['Meta (Instagram/Facebook)', 'Google Ads (Búsqueda)', 'TikTok Ads'], [pauta * 0.50, pauta * 0.30, pauta * 0.20], ['#E1306C', '#4285F4', '#00F2FE'] 
                 
-            dist_data = pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores})
-            fig_pauta = px.pie(dist_data, names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
+            fig_pauta = px.pie(pd.DataFrame({'Plataforma': plataformas, 'Asignación': valores}), names='Plataforma', values='Asignación', hole=0.4, color_discrete_sequence=colores)
             fig_pauta.update_traces(textinfo='percent+label')
             fig_pauta.update_layout(showlegend=False, margin=dict(t=30, b=10, l=10, r=10), height=350, paper_bgcolor='rgba(0,0,0,0)', font=dict(color='#8F95A3'))
             st.plotly_chart(fig_pauta, use_container_width=True)
-        else:
-            st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada.")
+        else: st.info("💡 Asigna un presupuesto en la parte superior para ver la distribución recomendada.")
 
+        # ==============================================================================
+        # MÓDULO NUEVO FASE 1: SUITE UNIVERSAL DE CIERRES WHATSAPP + CAMPAÑAS
+        # ==============================================================================
         st.markdown("---")
-        st.subheader("🤖 3. Suite IA de Creación de Campañas")
-        col_m1, col_m2 = st.columns(2)
-        with col_m1: prod_promo = st.text_input("¿Qué vas a promocionar?")
-        with col_m2: tono_marca = st.selectbox("Tono de comunicación:", ["Comercial y Directo", "Divertido y Cercano", "Urgente (Oferta)", "Elegante y Premium"])
-            
-        if st.button("✨ Generar Campaña", type="primary"):
-            if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
-            elif not prod_promo: st.warning("⚠️ Escribe el producto a promocionar.")
-            else:
-                prompt_marketing = f"Eres un Copywriter experto. Crea una campaña para '{prod_promo}' con tono '{tono_marca}'. Entrega: 1) Copy para Meta con emojis y CTA. 2) 3 Títulos cortos para Google Ads. 3) 1 Idea de diseño visual/arte."
-                try:
-                    res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
-                    st.markdown("#### 💡 Nueva Campaña Generada:")
-                    texto_campana = st.write_stream(stream_gemini(res_mkt))
-                    st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
-                    st.rerun()
-                except Exception as e: 
-                    error_str = str(e)
-                    if "429" in error_str or "quota" in error_str.lower():
-                        st.error("⏳ Límite de cuota alcanzado en la nube. Por favor, verifica los detalles de tu plan o API Key en Google AI Studio.")
-                    else:
-                        st.error(f"Error de conexión con IA: {e}")
+        st.subheader("🤖 3. Suite IA Comercial y Cierres (WhatsApp)")
+        st.markdown("Adapta la Inteligencia Artificial a tu industria exacta para generar publicidad y guiones de venta de alta conversión.")
+        
+        c_ia1, c_ia2, c_ia3 = st.columns(3)
+        with c_ia1: nicho_mercado = st.text_input("Industria/Nicho (Ej. Odontología, Ropa, Consultoría):")
+        with c_ia2: prod_promo = st.text_input("¿Qué vas a promocionar o vender?")
+        with c_ia3: tono_marca = st.selectbox("Tono de comunicación:", ["Comercial y Directo", "Consultivo y Experto", "Divertido y Cercano", "Urgente (Oferta)", "Elegante y Premium"])
+        
+        col_btn1, col_btn2 = st.columns(2)
+        
+        with col_btn1:
+            if st.button("✨ Generar Campaña Publicitaria", type="primary", use_container_width=True):
+                if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
+                elif not prod_promo or not nicho_mercado: st.warning("⚠️ Escribe tu nicho y el producto a promocionar.")
+                else:
+                    prompt_marketing = f"Eres un Copywriter experto en la industria de '{nicho_mercado}'. Crea una campaña para vender '{prod_promo}' con un tono '{tono_marca}'. Entrega de forma estructurada: 1) Copy persuasivo para Meta (Facebook/Instagram) con emojis y Llamado a la Acción. 2) 3 Títulos magnéticos para Google Ads. 3) 1 Idea creativa de diseño visual/arte."
+                    try:
+                        res_mkt = modelo_ia.generate_content(prompt_marketing, stream=True)
+                        st.markdown("#### 💡 Campaña Estratégica Generada:")
+                        texto_campana = st.write_stream(stream_gemini(res_mkt))
+                        st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing | {nicho_mercado} - '{prod_promo}']: \n{texto_campana}"
+                        st.rerun()
+                    except Exception as e: 
+                        if "429" in str(e) or "quota" in str(e).lower(): st.error("⏳ Límite de cuota alcanzado. Revisa tu API Key.")
+                        else: st.error(f"Error de conexión con IA: {e}")
+
+        with col_btn2:
+            if st.button("💬 Generar Guión de Cierre (WhatsApp)", type="secondary", use_container_width=True):
+                if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
+                elif not prod_promo or not nicho_mercado: st.warning("⚠️ Escribe tu nicho y el producto a promocionar.")
+                else:
+                    prompt_ventas = f"Eres el mejor cerrador de ventas por WhatsApp en la industria de '{nicho_mercado}'. Un cliente acaba de preguntar por '{prod_promo}'. Crea un guión de respuesta con tono '{tono_marca}' que incluya: 1) Saludo empático y gancho comercial. 2) Descripción de 2 beneficios clave (no solo características). 3) Una respuesta magistral para rebatir la objeción 'está muy caro'. 4) Pregunta de cierre para obligar al cliente a responder. Usa emojis estratégicos."
+                    try:
+                        res_ventas = modelo_ia.generate_content(prompt_ventas, stream=True)
+                        st.markdown("#### 📲 Guión de Cierre de Ventas (WhatsApp):")
+                        texto_ventas = st.write_stream(stream_gemini(res_ventas))
+                        st.session_state.apuntes_ia += f"\n\n[Guión WhatsApp | {nicho_mercado} - '{prod_promo}']: \n{texto_ventas}"
+                        st.rerun()
+                    except Exception as e: 
+                        if "429" in str(e) or "quota" in str(e).lower(): st.error("⏳ Límite de cuota alcanzado. Revisa tu API Key.")
+                        else: st.error(f"Error de conexión con IA: {e}")
         
         if st.session_state.apuntes_ia != "":
             st.write("")
