@@ -10,6 +10,7 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
+# Forzamos la barra a abrir por defecto, de forma 100% nativa.
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
@@ -21,7 +22,8 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    modelo_ia = genai.GenerativeModel('gemini-3.6-flash')
+    # EL MOTOR CORRECTO Y ESTABLE PARA EVITAR LOS LÍMITES ESTRICTOS (Sincronizado con Vercel)
+    modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
     ia_activa = True
 except:
     ia_activa = False
