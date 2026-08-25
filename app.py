@@ -10,12 +10,8 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 # 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
-# Obligamos a que la barra siempre nazca abierta de forma nativa
+# Forzamos la barra a abrir por defecto, de forma 100% nativa.
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
-
-if "inicio_sesion_nuevo" not in st.session_state:
-    st.session_state.pantalla_actual = "home"
-    st.session_state.inicio_sesion_nuevo = True
 
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
@@ -26,8 +22,8 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # CORRECCIÓN DEFINITIVA: Modelo universal y estable
-    modelo_ia = genai.GenerativeModel('gemini-pro')
+    # LA SOLUCIÓN MAESTRA: Usar el modelo moderno que Google SÍ tiene activo en sus servidores
+    modelo_ia = genai.GenerativeModel('gemini-2.0-flash')
     ia_activa = True
 except:
     ia_activa = False
@@ -68,17 +64,23 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
     return contenido.encode('utf-8')
 
 # ==============================================================================
-# INYECCIÓN HTML Y CSS: VIDEO WEBM 4K CON NAVEGACIÓN SEGURA
+# INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
 # ==============================================================================
-enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
+
+enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
 st.markdown(f"""
 <video autoplay muted loop playsinline id="bg-video">
-  <source src="{enlace_webm}" type="video/webm">
+  <source src="{enlace_fondo}" type="video/webm">
 </video>
 
 <style>
-    /* 1. Video al fondo extremo, fluido y nítido */
+    /* Ocultar solo herramientas molestas, dejando intacto el menú lateral */
+    [data-testid="stToolbar"] {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
+    div[data-testid="stSidebarNav"] {{display: none !important;}}
+    
+    /* Configuración del fondo animado respetando el sistema */
     #bg-video {{
         position: fixed;
         top: 0;
@@ -91,23 +93,19 @@ st.markdown(f"""
         pointer-events: none;
     }}
 
-    /* 2. Hacer transparente SOLO el lienzo trasero de la app, DEJANDO INTACTOS LOS BOTONES */
-    .stApp {{
+    /* Hacer transparente el lienzo principal pero SIN TOCAR los botones nativos */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
         background: transparent !important;
         background-color: transparent !important;
     }}
     
-    /* 3. Asegurar que la barra lateral tenga un fondo oscuro para que el texto se lea bien */
+    /* Asegurar que la barra lateral no se vuelva transparente y se pueda leer */
     [data-testid="stSidebar"] {{
-        background-color: rgba(12, 21, 25, 0.95) !important;
+        background-color: #0C1519 !important;
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
-    /* 4. Ocultar la firma de streamlit abajo y la navegación por defecto (porque usamos la tuya premium) */
-    footer {{visibility: hidden !important;}}
-    div[data-testid="stSidebarNav"] {{display: none !important;}}
-    
-    /* 5. EFECTO GLASSMORPHISM EN TARJETAS */
+    /* EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
@@ -170,7 +168,6 @@ with st.sidebar:
         icons=menu_iconos,
         menu_icon="cast",
         default_index=indice_actual,
-        key="menu_lateral_estrategico",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
@@ -244,7 +241,7 @@ with st.sidebar:
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: 
-                st.error(f"Error contactando a la IA: {e}")
+                st.error(f"Error de conexión con IA: {e}")
 
 # ==============================================================================
 # 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - INTACTO
