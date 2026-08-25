@@ -8,7 +8,7 @@ import google.generativeai as genai
 from streamlit_option_menu import option_menu
 
 # ==============================================================================
-# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
+# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS 
 # ==============================================================================
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
 
