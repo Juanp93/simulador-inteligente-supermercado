@@ -73,7 +73,6 @@ Generado por: Inteligencia Comercial Automatizada
 """
     return contenido.encode('utf-8')
     
-# ==============================================================================
 # INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
 # ==============================================================================
 
@@ -151,7 +150,6 @@ st.markdown(f"""
     .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
-
 
 
 def stream_gemini(respuesta):
