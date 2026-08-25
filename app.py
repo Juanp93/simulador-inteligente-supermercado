@@ -76,6 +76,7 @@ Generado por: Inteligencia Comercial Automatizada
 # ==============================================================================
 # INYECCIÓN CSS: SEGURO, LIMPIO Y SIN CONFLICTOS
 # ==============================================================================
+
 enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
 st.markdown(f"""
@@ -84,45 +85,51 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* 1. El video al fondo absoluto detrás de toda la aplicación */
+    /* Ocultar solo herramientas molestas, dejando intacto el menú lateral */
+    [data-testid="stToolbar"] {{visibility: hidden !important;}}
+    footer {{visibility: hidden !important;}}
+    div[data-testid="stSidebarNav"] {{display: none !important;}}
+    
+    /* Configuración del fondo animado respetando el sistema */
     #bg-video {{
-        position: fixed; 
-        top: 0; 
-        left: 0; 
-        min-width: 100vw; 
-        min-height: 100vh;
-        z-index: -1; 
-        object-fit: cover; 
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: -9999; 
+        object-fit: cover;
         opacity: 0.85; 
         pointer-events: none;
     }}
-    
-    /* 2. Transparencia estricta solo para dejar ver el video */
-    .stApp {{
-        background-color: transparent !important; 
-    }}
-    [data-testid="stHeader"] {{
+
+    /* Hacer transparente el lienzo principal pero SIN TOCAR los botones nativos */
+    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+        background: transparent !important;
         background-color: transparent !important;
     }}
     
-    /* 3. Color sólido para tu barra lateral */
+    /* Asegurar que la barra lateral no se vuelva transparente y se pueda leer */
     [data-testid="stSidebar"] {{
-        background-color: #0C1519 !important; 
+        background-color: #0C1519 !important;
         border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
-    /* 4. Ocultamos únicamente el menú de desarrollador de Streamlit en la esquina */
-    [data-testid="stToolbar"] {{visibility: hidden !important;}}
-    
-    /* ========================================= */
-    /* TUS TARJETAS Y MÉTRICAS (100% INTACTAS)  */
-    /* ========================================= */
+    /* EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
-        backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(114, 75, 57, 0.35); border-radius: 16px; color: #F3F4F6; box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(114, 75, 57, 0.35);
+        border-radius: 16px;
+        color: #F3F4F6;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }}
-    .metric-container {{ padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }}
+    .metric-container {{ 
+        padding: 22px; 
+        margin-bottom: 15px;
+        border-left: 4px solid #CF9D7B; 
+    }}
     .metric-success {{ border-left: 4px solid #00CC96; }}
     .metric-warning {{ border-left: 4px solid #FFA15A; }}
     .metric-danger {{ border-left: 4px solid #EF553B; }}
@@ -131,10 +138,16 @@ st.markdown(f"""
     .metric-value {{ font-size: 26px; color: #FFFFFF; font-weight: 700; margin-top: 8px; margin-bottom: 4px; }}
     .metric-caption {{ font-size: 12px; color: #8F95A3; line-height: 1.4; }}
     
-    .home-card {{ padding: 30px; margin-bottom: 20px; text-align: center; transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); }}
+    .home-card {{ 
+        padding: 30px; 
+        margin-bottom: 20px; 
+        text-align: center;
+        transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }}
     .home-card:hover {{ transform: translateY(-4px); border: 1px solid #CF9D7B; box-shadow: 0 12px 40px rgba(207, 157, 123, 0.2); }}
     .home-card h3 {{ color: #FFFFFF; margin-bottom: 12px; font-size: 19px; font-weight: 600; }}
     .home-card p {{ color: #8F95A3; font-size: 14px; margin-bottom: 25px; min-height: 45px; line-height: 1.5; }}
+    
     .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(114, 75, 57, 0.2); }}
 </style>
 """, unsafe_allow_html=True)
