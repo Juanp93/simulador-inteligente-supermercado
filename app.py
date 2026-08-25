@@ -61,21 +61,37 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# INYECCIÓN CSS PREMIUM CON TU FONDO ANIMADO
+# INYECCIÓN HTML: VIDEO WEBM DE ALTA DEFINICIÓN EN EL FONDO
+st.markdown("""
+<video autoplay muted loop playsinline id="bg-video">
+  <source src="https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm" type="video/webm">
+</video>
+""", unsafe_allow_html=True)
+
+# INYECCIÓN CSS PREMIUM (SOBRE EL CÓDIGO SEGURO)
 st.markdown("""
 <style>
     /* Ocultar botones de Streamlit en la esquina superior */
     [data-testid="stToolbar"] {visibility: hidden !important;}
     footer {visibility: hidden !important;}
     
-    /* FONDO ANIMADO MAESTRO (GIF DE GITHUB) */
-    [data-testid="stAppViewContainer"] {
-        background-color: #0C1519;
-        background-image: url('https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/GIF1.gif');
-        background-size: cover;
-        background-position: center center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
+    /* CONFIGURACIÓN DEL VIDEO WEBM */
+    #bg-video {
+        position: fixed;
+        top: 0;
+        left: 0;
+        min-width: 100vw;
+        min-height: 100vh;
+        z-index: -999;
+        object-fit: cover;
+        pointer-events: none;
+        opacity: 0.85; /* Ajuste para legibilidad */
+    }
+
+    /* HACER LA PARED TRANSPARENTE PARA VER EL VIDEO SIN ROMPER EL MENÚ */
+    .stApp, [data-testid="stAppViewContainer"] {
+        background-color: transparent !important;
+        background: transparent !important;
     }
     
     /* EFECTO GLASSMORPHISM EN TARJETAS */
