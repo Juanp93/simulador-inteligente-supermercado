@@ -67,7 +67,7 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
     return contenido.encode('utf-8')
 
 # ==============================================================================
-# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM (MENÚ RESTAURADO)
+# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM (RESCATE DEL BOTÓN)
 # ==============================================================================
 enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
@@ -77,7 +77,7 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar botones de Streamlit en la esquina superior */
+    /* Ocultar solo el menú de "Manage App" de Streamlit, no nuestro botón */
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     
@@ -94,10 +94,15 @@ st.markdown(f"""
         opacity: 0.85; 
     }}
 
-    /* 2. HACER TRANSPARENTE EL MURO DE STREAMLIT PARA VER EL VIDEO */
-    .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+    /* 2. HACER TRANSPARENTE EL MURO PERO ASEGURAR EL ENCABEZADO */
+    .stApp, [data-testid="stAppViewContainer"] {{
         background: transparent !important;
         background-color: transparent !important;
+    }}
+    header[data-testid="stHeader"] {{
+        background: transparent !important;
+        background-color: transparent !important;
+        z-index: 99998 !important; /* Mantiene la barra superior viva */
     }}
     
     /* 3. PROTEGER EL COLOR DE LA BARRA LATERAL */
@@ -105,22 +110,28 @@ st.markdown(f"""
         background-color: #0C1519 !important;
     }}
     
-    /* 4. EL BOTÓN PARA REABRIR EL PANEL (CORREGIDO Y 100% VISIBLE) */
+    /* 4. RESCATE ABSOLUTO DEL BOTÓN PARA REABRIR EL PANEL */
     [data-testid="collapsedControl"] {{
-        background-color: rgba(12, 21, 25, 0.9) !important;
-        border: 1px solid #CF9D7B !important;
+        display: inline-flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: #0C1519 !important;
+        border: 2px solid #CF9D7B !important;
         border-radius: 8px !important;
-        box-shadow: 0 4px 15px rgba(207, 157, 123, 0.3) !important;
-        margin: 10px !important; /* Mantiene su posición natural sin romperse */
+        box-shadow: 0 0 15px rgba(207, 157, 123, 0.6) !important;
+        z-index: 999999 !important; /* Imposible de tapar */
+        margin: 15px !important;
         transition: all 0.3s ease !important;
     }}
     [data-testid="collapsedControl"]:hover {{
         background-color: rgba(207, 157, 123, 0.2) !important;
-        box-shadow: 0 6px 20px rgba(207, 157, 123, 0.6) !important;
+        transform: scale(1.05) !important;
     }}
     [data-testid="collapsedControl"] svg {{
         fill: #CF9D7B !important;
         color: #CF9D7B !important;
+        width: 24px !important;
+        height: 24px !important;
     }}
     
     /* 5. EFECTO GLASSMORPHISM EN TARJETAS */
@@ -187,6 +198,7 @@ with st.sidebar:
         icons=menu_iconos,
         menu_icon="cast",
         default_index=indice_actual,
+        key="menu_lateral_estrategico",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
