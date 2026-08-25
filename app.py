@@ -8,11 +8,11 @@ import google.generativeai as genai
 from streamlit_option_menu import option_menu
 
 # ==============================================================================
-# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
+# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS (¡NUEVO SEGURO DE BARRA LATERAL!)
 # ==============================================================================
-st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
+# Forzamos a que la barra siempre inicie abierta (expanded)
+st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀", initial_sidebar_state="expanded")
 
-# SEGURO DE NAVEGACIÓN: Solo actúa al abrir el enlace por primera vez, no borra datos durante el uso.
 if "inicio_sesion_nuevo" not in st.session_state:
     st.session_state.pantalla_actual = "home"
     st.session_state.inicio_sesion_nuevo = True
@@ -67,7 +67,7 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
     return contenido.encode('utf-8')
 
 # ==============================================================================
-# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM (RESCATE DEL BOTÓN)
+# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM (MENÚ RESCATADO)
 # ==============================================================================
 enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
@@ -77,7 +77,7 @@ st.markdown(f"""
 </video>
 
 <style>
-    /* Ocultar solo el menú de "Manage App" de Streamlit, no nuestro botón */
+    /* Ocultar solo el menú derecho de opciones, no el menú lateral */
     [data-testid="stToolbar"] {{visibility: hidden !important;}}
     footer {{visibility: hidden !important;}}
     
@@ -94,44 +94,27 @@ st.markdown(f"""
         opacity: 0.85; 
     }}
 
-    /* 2. HACER TRANSPARENTE EL MURO PERO ASEGURAR EL ENCABEZADO */
+    /* 2. HACER TRANSPARENTE EL MURO PERO DEJAR LA BARRA SUPERIOR VISIBLE */
     .stApp, [data-testid="stAppViewContainer"] {{
         background: transparent !important;
         background-color: transparent !important;
     }}
-    header[data-testid="stHeader"] {{
+    
+    [data-testid="stHeader"] {{
         background: transparent !important;
         background-color: transparent !important;
-        z-index: 99998 !important; /* Mantiene la barra superior viva */
     }}
     
-    /* 3. PROTEGER EL COLOR DE LA BARRA LATERAL */
+    /* 3. RESCATE DE LOS ICONOS DEL MENÚ SUPERIOR (Para que el botón se vea cobrizo y no negro) */
+    [data-testid="stHeader"] button * {{
+        fill: #CF9D7B !important;
+        stroke: #CF9D7B !important;
+    }}
+    
+    /* 4. BARRA LATERAL OSCURA PARA LEGIBILIDAD */
     [data-testid="stSidebar"] {{
         background-color: #0C1519 !important;
-    }}
-    
-    /* 4. RESCATE ABSOLUTO DEL BOTÓN PARA REABRIR EL PANEL */
-    [data-testid="collapsedControl"] {{
-        display: inline-flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background-color: #0C1519 !important;
-        border: 2px solid #CF9D7B !important;
-        border-radius: 8px !important;
-        box-shadow: 0 0 15px rgba(207, 157, 123, 0.6) !important;
-        z-index: 999999 !important; /* Imposible de tapar */
-        margin: 15px !important;
-        transition: all 0.3s ease !important;
-    }}
-    [data-testid="collapsedControl"]:hover {{
-        background-color: rgba(207, 157, 123, 0.2) !important;
-        transform: scale(1.05) !important;
-    }}
-    [data-testid="collapsedControl"] svg {{
-        fill: #CF9D7B !important;
-        color: #CF9D7B !important;
-        width: 24px !important;
-        height: 24px !important;
+        border-right: 1px solid rgba(207, 157, 123, 0.2) !important;
     }}
     
     /* 5. EFECTO GLASSMORPHISM EN TARJETAS */
