@@ -41,7 +41,8 @@ def df_to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
     return output.getvalue()
 
-def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia):
+# ACTUALIZACIÓN FASE 3: REPORTE EJECUTIVO ENRIQUECIDO
+def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, estrella, dormido):
     contenido = f"""====================================================
 INFORME EJECUTIVO - INTELRETAIL PRO
 ====================================================
@@ -49,6 +50,11 @@ INFORME EJECUTIVO - INTELRETAIL PRO
 💰 RESUMEN FINANCIERO GLOBAL:
 - Ventas Totales Registradas: {simbolo}{ventas_tot:,.2f}
 - Ganancia Neta Libre Estimada: {simbolo}{ganancia_tot:,.2f}
+- Ticket Promedio: {simbolo}{ticket:,.2f}
+
+📦 RENDIMIENTO DE INVENTARIO:
+- Producto ESTRELLA (Top Ganancia): {estrella}
+- Producto DORMIDO (Alerta Baja Rotación): {dormido}
 
 ----------------------------------------------------
 🧠 APUNTES Y ESTRATEGIAS DE INTELIGENCIA ARTIFICIAL:
@@ -276,13 +282,11 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 st.rerun()
 
         st.markdown("Edita individualmente usando las celdas de la tabla:")
-        # SOLUCIÓN BUG 2 (RECÁLCULO EN VIVO): Capturamos tu edición manual al instante
         costos_actualizados = st.data_editor(
             st.session_state.costos_editados, hide_index=True, use_container_width=True,
             column_config={"Costo (%)": st.column_config.NumberColumn("Costo (%)", min_value=0.0, max_value=100.0, step=1.0, format="%.1f %%")}
         )
         
-        # Si cambiaste un número, el sistema actualiza su matemática AHORA MISMO, antes de pintar gráficas
         if not costos_actualizados.equals(st.session_state.costos_editados):
             st.session_state.costos_editados = costos_actualizados
             df_final = pd.merge(df_temp, st.session_state.costos_editados, on='Product Name', how='left')
@@ -297,7 +301,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
         with col_m2:
             archivo_costos = st.file_uploader("Cargar tabla previa de Costos (.csv)", type=['csv'], label_visibility="collapsed")
             if archivo_costos:
-                # SOLUCIÓN BUG 1 (LA GUERRA CIVIL): Botón de seguridad para evitar titileos
                 if st.button("♻️ Aplicar Costos de este Archivo", use_container_width=True):
                     try:
                         df_cargado = pd.read_csv(archivo_costos)
@@ -338,6 +341,50 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{cant_dormido} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
+        # ==============================================================================
+        # ACTUALIZACIÓN FASE 2: SEGMENTACIÓN ABC (LEY DE PARETO)
+        # ==============================================================================
+        st.markdown("---")
+        st.subheader("🥇 Segmentación Inteligente ABC (Ley de Pareto)")
+        st.markdown("Clasificación matemática automática de tu catálogo basada en la ganancia real que aportan a la caja.")
+        
+        df_pareto = df_g.copy()
+        df_pareto = df_pareto.sort_values(by='Ganancia_Neta', ascending=False).reset_index(drop=True)
+        total_ganancia_positiva = df_pareto[df_pareto['Ganancia_Neta'] > 0]['Ganancia_Neta'].sum()
+        
+        if total_ganancia_positiva > 0:
+            df_pareto['Porcentaje'] = np.where(df_pareto['Ganancia_Neta'] > 0, df_pareto['Ganancia_Neta'] / total_ganancia_positiva * 100, 0)
+            df_pareto['Acumulado'] = df_pareto['Porcentaje'].cumsum()
+            condiciones = [
+                (df_pareto['Acumulado'] <= 80) & (df_pareto['Ganancia_Neta'] > 0),
+                (df_pareto['Acumulado'] > 80) & (df_pareto['Acumulado'] <= 95) & (df_pareto['Ganancia_Neta'] > 0)
+            ]
+            opciones = ['🥇 Tipo A (Top 80%)', '🥈 Tipo B (Medio 15%)']
+            df_pareto['Clasificación'] = np.select(condiciones, opciones, default='🥉 Tipo C (Bajo 5% o Pérdida)')
+        else:
+            df_pareto['Clasificación'] = '🥉 Tipo C (Pérdida)'
+
+        cat_A = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo A')])
+        cat_B = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo B')])
+        cat_C = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo C')])
+
+        col_a, col_b, col_c = st.columns(3)
+        col_a.info(f"🥇 **{cat_A} Prod. Tipo A:** Nunca te quedes sin stock. Estos sostienen toda tu rentabilidad.")
+        col_b.warning(f"🥈 **{cat_B} Prod. Tipo B:** Rotación estándar y estable. Vigila que sus costos no suban.")
+        col_c.error(f"🥉 **{cat_C} Prod. Tipo C:** Capital congelado. ¡Urge armar promociones para liquidar esto!")
+        
+        st.dataframe(
+            df_pareto[['Product Name', 'Clasificación', 'Ganancia_Neta', 'Quantity']],
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Product Name": "Nombre del Producto",
+                "Clasificación": "Clasificación ABC",
+                "Ganancia_Neta": st.column_config.NumberColumn("Dinero Libre Aportado", format=f"{m_simbolo}%.2f"),
+                "Quantity": "Unidades Vendidas"
+            }
+        )
+
         st.markdown("---")
         col_export, col_ia = st.columns(2)
         
@@ -346,7 +393,8 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
             st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
             
-            txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia)
+            # ACTUALIZACIÓN FASE 3: INVOCACIÓN DEL REPORTE CON LOS NUEVOS DATOS
+            txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia, ticket_promedio, prod_estrella, prod_dormido)
             st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
         with col_ia:
@@ -371,13 +419,13 @@ elif st.session_state.pantalla_actual == "diagnostico":
                     st.markdown(st.session_state.apuntes_ia)
         
         st.markdown("---")
-        st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
+        st.subheader("🎯 Matriz BCG: Rentabilidad vs. Rotación")
         fig_bcg = px.scatter(df_g, x='Quantity', y='Ganancia_Neta', size='Sales', color='Product Name', hover_name='Product Name', labels={'Quantity': 'Unidades Vendidas', 'Ganancia_Neta': 'Ganancia Neta Libre'})
         fig_bcg.update_layout(showlegend=True, height=500, margin=dict(t=10, l=10, r=10, b=10))
         st.plotly_chart(fig_bcg, use_container_width=True)
 
         st.markdown("---")
-        st.subheader("📊 4. Análisis Profundo del Negocio")
+        st.subheader("📊 Análisis Profundo del Negocio")
         tipo_analisis = st.radio("Selecciona la métrica:", ["📦 Top 10 Productos (Por Unidades Vendidas)", "💰 Top 10 Productos (Por Ingreso Bruto)", "👥 Top 10 Clientes (Por Facturación)"], horizontal=True)
 
         if "Clientes" in tipo_analisis:
