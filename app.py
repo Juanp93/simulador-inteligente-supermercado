@@ -12,7 +12,7 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
 
-# Hard-Reset para obligar al sistema a empezar en "home" en nuevas sesiones
+# SEGURO DE NAVEGACIÓN: Solo actúa al abrir el enlace por primera vez, no borra datos durante el uso.
 if "inicio_sesion_nuevo" not in st.session_state:
     st.session_state.pantalla_actual = "home"
     st.session_state.inicio_sesion_nuevo = True
@@ -67,7 +67,7 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
     return contenido.encode('utf-8')
 
 # ==============================================================================
-# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM
+# INYECCIÓN DEL VIDEO WEBM 4K Y CSS PREMIUM (MENÚ RESTAURADO)
 # ==============================================================================
 enlace_webm = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
 
@@ -105,23 +105,18 @@ st.markdown(f"""
         background-color: #0C1519 !important;
     }}
     
-    /* 4. EL NUEVO BOTÓN FLOTANTE PARA REABRIR EL PANEL (HÉROE DEL DISEÑO) */
+    /* 4. EL BOTÓN PARA REABRIR EL PANEL (CORREGIDO Y 100% VISIBLE) */
     [data-testid="collapsedControl"] {{
-        background-color: rgba(12, 21, 25, 0.85) !important;
+        background-color: rgba(12, 21, 25, 0.9) !important;
         border: 1px solid #CF9D7B !important;
         border-radius: 8px !important;
-        box-shadow: 0 4px 15px rgba(207, 157, 123, 0.35) !important;
-        color: #CF9D7B !important;
-        top: 20px !important;
-        left: 20px !important;
-        z-index: 999999 !important;
-        padding: 5px !important;
+        box-shadow: 0 4px 15px rgba(207, 157, 123, 0.3) !important;
+        margin: 10px !important; /* Mantiene su posición natural sin romperse */
         transition: all 0.3s ease !important;
     }}
     [data-testid="collapsedControl"]:hover {{
         background-color: rgba(207, 157, 123, 0.2) !important;
         box-shadow: 0 6px 20px rgba(207, 157, 123, 0.6) !important;
-        transform: scale(1.05) !important;
     }}
     [data-testid="collapsedControl"] svg {{
         fill: #CF9D7B !important;
@@ -186,14 +181,12 @@ with st.sidebar:
     except:
         indice_actual = 0
 
-    # Inyección de llave única (key) para controlar la memoria rebelde del navegador
     seleccion = option_menu(
         menu_title=None,
         options=menu_opciones,
         icons=menu_iconos,
         menu_icon="cast",
         default_index=indice_actual,
-        key="menu_lateral_estrategico",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
