@@ -21,7 +21,6 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    # EL MOTOR CORRECTO EXIGIDO POR EL SERVIDOR
     modelo_ia = genai.GenerativeModel('gemini-3.6-flash')
     ia_activa = True
 except:
@@ -240,7 +239,11 @@ with st.sidebar:
                 st.session_state.historial_chat.append({"role": "assistant", "content": texto_completo})
                 st.session_state.apuntes_ia += f"\n\n[Consulta Libre - Chat IA]:\n{texto_completo}"
             except Exception as e: 
-                st.error(f"Error de conexión con IA: {e}")
+                error_str = str(e)
+                if "429" in error_str or "quota" in error_str.lower():
+                    st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                else:
+                    st.error(f"Error de conexión con IA: {e}")
 
 # ==============================================================================
 # 3. PROCESAMIENTO MATEMÁTICO INTELIGENTE (GLOBAL) - INTACTO
@@ -446,7 +449,11 @@ elif st.session_state.pantalla_actual == "diagnostico":
                         st.session_state.apuntes_ia += f"\n\n[Análisis de Auditoría]:\n{texto_estrategia}"
                         st.rerun() 
                     except Exception as e: 
-                        st.error(f"Error contactando a la IA: {e}")
+                        error_str = str(e)
+                        if "429" in error_str or "quota" in error_str.lower():
+                            st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                        else:
+                            st.error(f"Error de conexión con IA: {e}")
             
             if st.session_state.apuntes_ia != "":
                 st.write("")
@@ -639,7 +646,11 @@ elif st.session_state.pantalla_actual == "simulador":
                     st.session_state.apuntes_ia += f"\n\n[Campaña de Marketing para '{prod_promo}']: \n{texto_campana}"
                     st.rerun()
                 except Exception as e: 
-                    st.error(f"Error contactando a la IA: {e}")
+                    error_str = str(e)
+                    if "429" in error_str or "quota" in error_str.lower():
+                        st.error("⏳ ¡Vas muy rápido! Has alcanzado el límite de velocidad de tu clave gratuita. Por favor, espera 30 segundos y vuelve a consultar.")
+                    else:
+                        st.error(f"Error de conexión con IA: {e}")
         
         if st.session_state.apuntes_ia != "":
             st.write("")
