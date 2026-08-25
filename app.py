@@ -12,6 +12,11 @@ from streamlit_option_menu import option_menu
 # ==============================================================================
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="🚀")
 
+# Hard-Reset para obligar al sistema a empezar en "home" en nuevas sesiones
+if "inicio_sesion_nuevo" not in st.session_state:
+    st.session_state.pantalla_actual = "home"
+    st.session_state.inicio_sesion_nuevo = True
+
 if "pantalla_actual" not in st.session_state: st.session_state.pantalla_actual = "home"
 if "historial_chat" not in st.session_state: st.session_state.historial_chat = []
 if "df_bruto" not in st.session_state: st.session_state.df_bruto = pd.DataFrame()
@@ -83,10 +88,10 @@ st.markdown(f"""
         left: 0;
         min-width: 100vw;
         min-height: 100vh;
-        z-index: -999; /* Lo empuja al fondo */
+        z-index: -999; 
         object-fit: cover;
-        pointer-events: none; /* Permite hacer clic a través del video */
-        opacity: 0.85; /* Ajuste perfecto para contraste con las tarjetas */
+        pointer-events: none; 
+        opacity: 0.85; 
     }}
 
     /* 2. HACER TRANSPARENTE EL MURO DE STREAMLIT PARA VER EL VIDEO */
@@ -95,12 +100,35 @@ st.markdown(f"""
         background-color: transparent !important;
     }}
     
-    /* 3. PROTEGER EL COLOR DE LA BARRA LATERAL PARA QUE NO SE VUELVA TRANSPARENTE */
+    /* 3. PROTEGER EL COLOR DE LA BARRA LATERAL */
     [data-testid="stSidebar"] {{
         background-color: #0C1519 !important;
     }}
     
-    /* 4. EFECTO GLASSMORPHISM EN TARJETAS */
+    /* 4. EL NUEVO BOTÓN FLOTANTE PARA REABRIR EL PANEL (HÉROE DEL DISEÑO) */
+    [data-testid="collapsedControl"] {{
+        background-color: rgba(12, 21, 25, 0.85) !important;
+        border: 1px solid #CF9D7B !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 15px rgba(207, 157, 123, 0.35) !important;
+        color: #CF9D7B !important;
+        top: 20px !important;
+        left: 20px !important;
+        z-index: 999999 !important;
+        padding: 5px !important;
+        transition: all 0.3s ease !important;
+    }}
+    [data-testid="collapsedControl"]:hover {{
+        background-color: rgba(207, 157, 123, 0.2) !important;
+        box-shadow: 0 6px 20px rgba(207, 157, 123, 0.6) !important;
+        transform: scale(1.05) !important;
+    }}
+    [data-testid="collapsedControl"] svg {{
+        fill: #CF9D7B !important;
+        color: #CF9D7B !important;
+    }}
+    
+    /* 5. EFECTO GLASSMORPHISM EN TARJETAS */
     .metric-container, .home-card {{ 
         background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%);
         backdrop-filter: blur(20px);
@@ -158,12 +186,14 @@ with st.sidebar:
     except:
         indice_actual = 0
 
+    # Inyección de llave única (key) para controlar la memoria rebelde del navegador
     seleccion = option_menu(
         menu_title=None,
         options=menu_opciones,
         icons=menu_iconos,
         menu_icon="cast",
         default_index=indice_actual,
+        key="menu_lateral_estrategico",
         styles={
             "container": {"padding": "0!important", "background-color": "transparent"},
             "icon": {"color": "#CF9D7B", "font-size": "16px"},
