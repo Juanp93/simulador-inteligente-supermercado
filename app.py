@@ -393,6 +393,59 @@ elif st.session_state.pantalla_actual == "diagnostico":
                 st.write("")
                 with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
                     st.markdown(st.session_state.apuntes_ia)
+
+
+        # ==============================================================================
+        # MÓDULO NUEVO FASE 2: SEGMENTACIÓN ABC (PARETO)
+        # ==============================================================================
+        st.markdown("---")
+        st.subheader("🥇 2.5 Segmentación Inteligente ABC (Ley de Pareto)")
+        st.markdown("Clasificación matemática automática de tu catálogo basada en la ganancia real que aportan a la caja.")
+        
+        # 1. Preparar el motor de cálculo
+        df_pareto = df_g.copy()
+        df_pareto = df_pareto.sort_values(by='Ganancia_Neta', ascending=False).reset_index(drop=True)
+        
+        # 2. Calcular porcentajes acumulados con precisión
+        total_ganancia_positiva = df_pareto[df_pareto['Ganancia_Neta'] > 0]['Ganancia_Neta'].sum()
+        
+        if total_ganancia_positiva > 0:
+            df_pareto['Porcentaje'] = np.where(df_pareto['Ganancia_Neta'] > 0, df_pareto['Ganancia_Neta'] / total_ganancia_positiva * 100, 0)
+            df_pareto['Acumulado'] = df_pareto['Porcentaje'].cumsum()
+            
+            # 3. Asignar etiquetas gerenciales
+            condiciones = [
+                (df_pareto['Acumulado'] <= 80) & (df_pareto['Ganancia_Neta'] > 0),
+                (df_pareto['Acumulado'] > 80) & (df_pareto['Acumulado'] <= 95) & (df_pareto['Ganancia_Neta'] > 0)
+            ]
+            opciones = ['🥇 Tipo A (Top 80%)', '🥈 Tipo B (Medio 15%)']
+            df_pareto['Clasificación'] = np.select(condiciones, opciones, default='🥉 Tipo C (Bajo 5% o Pérdida)')
+        else:
+            df_pareto['Clasificación'] = '🥉 Tipo C (Pérdida)'
+
+        # 4. Panel Visual de Alertas
+        cat_A = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo A')])
+        cat_B = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo B')])
+        cat_C = len(df_pareto[df_pareto['Clasificación'].str.contains('Tipo C')])
+
+        col_a, col_b, col_c = st.columns(3)
+        col_a.info(f"🥇 **{cat_A} Prod. Tipo A:** Nunca te quedes sin stock. Estos sostienen toda tu rentabilidad.")
+        col_b.warning(f"🥈 **{cat_B} Prod. Tipo B:** Rotación estándar y estable. Vigila que sus costos no suban.")
+        col_c.error(f"🥉 **{cat_C} Prod. Tipo C:** Capital congelado. ¡Urge armar promociones para liquidar esto!")
+        
+        # 5. Tabla Dinámica
+        st.dataframe(
+            df_pareto[['Product Name', 'Clasificación', 'Ganancia_Neta', 'Quantity']],
+            hide_index=True,
+            use_container_width=True,
+            column_config={
+                "Product Name": "Nombre del Producto",
+                "Clasificación": "Clasificación ABC",
+                "Ganancia_Neta": st.column_config.NumberColumn("Dinero Libre Aportado", format=f"{m_simbolo}%.2f"),
+                "Quantity": "Unidades Vendidas"
+            }
+        )
+
         
         st.markdown("---")
         st.subheader("🎯 3. Matriz BCG: Rentabilidad vs. Rotación")
