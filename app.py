@@ -7,7 +7,7 @@ import io
 import google.generativeai as genai
 
 # ==============================================================================
-# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS (ACTUALIZADO CON VIDEO RESTRINGIDO Y CRISTAL)
+# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
 # ==============================================================================
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="📈")
 
@@ -147,21 +147,21 @@ st.markdown(f"""
         box-shadow: 0 8px 32px rgba(0,0,0,0.6);
     }}
     
-    .metric-container { padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }
-    .metric-success { border-left: 4px solid #00CC96 !important; }
-    .metric-warning { border-left: 4px solid #FFA15A !important; }
-    .metric-danger { border-left: 4px solid #EF553B !important; }
+    .metric-container {{ padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }}
+    .metric-success {{ border-left: 4px solid #00CC96 !important; }}
+    .metric-warning {{ border-left: 4px solid #FFA15A !important; }}
+    .metric-danger {{ border-left: 4px solid #EF553B !important; }}
     
-    .metric-title { font-size: 13px; color: #CF9D7B; font-weight: bold; text-transform: uppercase; }
-    .metric-value { font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
-    .metric-caption { font-size: 12px; color: #A3A3A3; margin-top: 4px; line-height: 1.4; }
+    .metric-title {{ font-size: 13px; color: #CF9D7B; font-weight: bold; text-transform: uppercase; }}
+    .metric-value {{ font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }}
+    .metric-caption {{ font-size: 12px; color: #A3A3A3; margin-top: 4px; line-height: 1.4; }}
     
-    .home-card { padding: 25px; margin-bottom: 20px; text-align: center; }
-    .home-card h3 { color: #ffffff; margin-bottom: 10px; font-size: 18px; }
-    .home-card p { color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }
+    .home-card {{ padding: 25px; margin-bottom: 20px; text-align: center; }}
+    .home-card h3 {{ color: #ffffff; margin-bottom: 10px; font-size: 18px; }}
+    .home-card p {{ color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }}
     
-    div[data-testid="stSidebarNav"] {display: none;}
-    .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }
+    div[data-testid="stSidebarNav"] {{display: none;}}
+    .sidebar-chat {{ margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }}
 </style>
 """, unsafe_allow_html=True)
 
