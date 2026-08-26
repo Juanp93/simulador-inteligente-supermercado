@@ -7,7 +7,7 @@ import io
 import google.generativeai as genai
 
 # ==============================================================================
-# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS
+# 1. CONFIGURACIÓN, MEMORIA Y ESTILOS (ACTUALIZADO CON VIDEO RESTRINGIDO Y CRISTAL)
 # ==============================================================================
 st.set_page_config(page_title="IntelRetail Pro", layout="wide", page_icon="📈")
 
@@ -65,7 +65,6 @@ Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
 
-# FASE 3 UNIVERSAL: GENERADOR DE REPORTE WEB (LISTO PARA PDF)
 def generar_informe_html(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, estrella, dormido):
     html = f"""
     <html>
@@ -111,18 +110,56 @@ def generar_informe_html(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, es
     """
     return html.encode('utf-8')
 
-st.markdown("""
+# ENLACE DEL VIDEO DE FONDO (RESTRINGIDO AL ÁREA OPERATIVA)
+enlace_fondo = "https://github.com/Juanp93/simulador-inteligente-supermercado/raw/main/gif4.webm"
+
+st.markdown(f"""
+<video autoplay muted loop playsinline id="bg-video-reestringido">
+  <source src="{enlace_fondo}" type="video/webm">
+</video>
+
 <style>
-    .metric-container { background-color: #1E1E1E; padding: 20px; border-radius: 10px; border-left: 5px solid #636EFA; margin-bottom: 15px; }
-    .metric-success { border-left: 5px solid #00CC96; }
-    .metric-warning { border-left: 5px solid #FFA15A; }
-    .metric-danger { border-left: 5px solid #EF553B; }
-    .metric-title { font-size: 13px; color: #A3A3A3; font-weight: bold; text-transform: uppercase; }
+    /* El video se posiciona respetando el espacio exclusivo de la barra lateral */
+    #bg-video-reestringido {{
+        position: fixed; 
+        top: 0; 
+        left: 21rem; 
+        width: calc(100vw - 21rem); 
+        height: 100vh;
+        z-index: -1; 
+        object-fit: cover; 
+        opacity: 0.85; 
+        pointer-events: none;
+    }}
+    
+    .stApp {{
+        background-color: transparent !important;
+    }}
+
+    /* Tarjetas con efecto Cristal (Glassmorphism) */
+    .metric-container, .home-card {{ 
+        background: linear-gradient(135deg, rgba(22, 33, 39, 0.75) 0%, rgba(12, 21, 25, 0.90) 100%) !important;
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(207, 157, 123, 0.35) !important; 
+        border-radius: 16px; 
+        color: #F3F4F6; 
+        box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+    }}
+    
+    .metric-container { padding: 22px; margin-bottom: 15px; border-left: 4px solid #CF9D7B; }
+    .metric-success { border-left: 4px solid #00CC96 !important; }
+    .metric-warning { border-left: 4px solid #FFA15A !important; }
+    .metric-danger { border-left: 4px solid #EF553B !important; }
+    
+    .metric-title { font-size: 13px; color: #CF9D7B; font-weight: bold; text-transform: uppercase; }
     .metric-value { font-size: 22px; color: #FFFFFF; font-weight: bold; margin-top: 5px; }
-    .metric-caption { font-size: 12px; color: #858585; margin-top: 4px; line-height: 1.4; }
-    .home-card { background-color: #1a1c24; border: 1px solid #2d3139; border-radius: 12px; padding: 25px; margin-bottom: 20px; text-align: center; }
+    .metric-caption { font-size: 12px; color: #A3A3A3; margin-top: 4px; line-height: 1.4; }
+    
+    .home-card { padding: 25px; margin-bottom: 20px; text-align: center; }
     .home-card h3 { color: #ffffff; margin-bottom: 10px; font-size: 18px; }
     .home-card p { color: #a0aec0; font-size: 14px; margin-bottom: 20px; min-height: 40px; }
+    
     div[data-testid="stSidebarNav"] {display: none;}
     .sidebar-chat { margin-top: 30px; padding-top: 20px; border-top: 1px solid #333; }
 </style>
@@ -654,7 +691,6 @@ elif st.session_state.pantalla_actual == "simulador":
                 except Exception as e: 
                     st.error("Error contactando a la IA.")
         
-        # FASE 1 UNIVERSAL: MOTOR DE CIERRES WHATSAPP IA
         st.markdown("---")
         st.subheader("💬 4. Motor de Cierres (WhatsApp IA)")
         st.markdown("Convierte objeciones difíciles en ventas reales con guiones persuasivos adaptados a cualquier industria.")
