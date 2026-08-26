@@ -20,7 +20,7 @@ if "apuntes_ia" not in st.session_state: st.session_state.apuntes_ia = ""
 
 try:
     genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-    modelo_ia = genai.GenerativeModel('gemini-3.6-flash')
+    modelo_ia = genai.GenerativeModel('gemini-1.5-flash')
     ia_activa = True
 except:
     ia_activa = False
@@ -41,7 +41,6 @@ def df_to_excel(df):
         df.to_excel(writer, index=False, sheet_name='Reporte Ejecutivo')
     return output.getvalue()
 
-# ACTUALIZACIÓN FASE 3: REPORTE EJECUTIVO ENRIQUECIDO
 def generar_informe_texto(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, estrella, dormido):
     contenido = f"""====================================================
 INFORME EJECUTIVO - INTELRETAIL PRO
@@ -65,6 +64,52 @@ INFORME EJECUTIVO - INTELRETAIL PRO
 Generado automáticamente por tu copiloto IntelRetail Pro.
 """
     return contenido.encode('utf-8')
+
+# FASE 3 UNIVERSAL: GENERADOR DE REPORTE WEB (LISTO PARA PDF)
+def generar_informe_html(ventas_tot, ganancia_tot, simbolo, notas_ia, ticket, estrella, dormido):
+    html = f"""
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+            body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #1a1a1a; background-color: #ffffff; line-height: 1.6; }}
+            h1 {{ color: #0C1519; border-bottom: 3px solid #CF9D7B; padding-bottom: 10px; margin-bottom: 30px; font-size: 28px; }}
+            h2 {{ color: #2d3748; font-size: 20px; margin-top: 30px; }}
+            .box {{ background: #f8fafc; padding: 20px; border-radius: 8px; border-left: 5px solid #00CC96; margin-bottom: 25px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+            .box.danger {{ border-left: 5px solid #EF553B; }}
+            p {{ margin: 10px 0; font-size: 15px; }}
+            b {{ color: #2d3748; display: inline-block; width: 220px; }}
+            .ai-notes {{ background: #f0fdf4; padding: 20px; border-radius: 8px; border: 1px solid #bbf7d0; font-family: 'Courier New', Courier, monospace; font-size: 13px; white-space: pre-wrap; }}
+            .footer {{ margin-top: 50px; text-align: center; color: #718096; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 20px; }}
+        </style>
+    </head>
+    <body>
+        <h1>📊 Reporte Ejecutivo Corporativo - IntelRetail Pro</h1>
+        
+        <div class="box">
+            <h2>💰 Resumen Financiero Global</h2>
+            <p><b>Ventas Totales Registradas:</b> {simbolo}{ventas_tot:,.2f}</p>
+            <p><b>Ganancia Neta Libre:</b> {simbolo}{ganancia_tot:,.2f}</p>
+            <p><b>Ticket Promedio:</b> {simbolo}{ticket:,.2f}</p>
+        </div>
+        
+        <div class="box danger">
+            <h2>📦 Rendimiento de Inventario</h2>
+            <p><b>Producto ESTRELLA (Mayor Ganancia):</b> {estrella}</p>
+            <p><b>Producto DORMIDO (Baja Rotación):</b> {dormido}</p>
+        </div>
+        
+        <h2>🧠 Consultoría y Estrategias (IA)</h2>
+        <div class="ai-notes">{notas_ia if notas_ia != "" else "No se solicitaron estrategias a la Inteligencia Artificial durante este periodo de análisis."}</div>
+        
+        <div class="footer">
+            Documento generado automáticamente por el motor de inteligencia comercial IntelRetail Pro.<br>
+            Confidencial y de uso exclusivo gerencial.
+        </div>
+    </body>
+    </html>
+    """
+    return html.encode('utf-8')
 
 st.markdown("""
 <style>
@@ -341,9 +386,6 @@ elif st.session_state.pantalla_actual == "diagnostico":
             st.markdown(f'<div class="metric-container metric-danger"><div class="metric-title">DORMIDO (ALERTA DE INVENTARIO)</div><div class="metric-value">{cant_dormido} Unds</div><div class="metric-caption"><b>{prod_dormido}</b><br>¡Alerta roja! Este producto está estancado y tienes dinero congelado. Necesita promoción urgente.</div></div>', unsafe_allow_html=True)
             st.markdown(f'<div class="metric-container"><div class="metric-title">TICKET PROMEDIO GLOBAL</div><div class="metric-value">{m_simbolo}{ticket_promedio:,.2f}</div><div class="metric-caption">Esta es la facturación media histórica extraída directamente de tu base de datos.</div></div>', unsafe_allow_html=True)
         
-        # ==============================================================================
-        # ACTUALIZACIÓN FASE 2: SEGMENTACIÓN ABC (LEY DE PARETO)
-        # ==============================================================================
         st.markdown("---")
         st.subheader("🥇 Segmentación Inteligente ABC (Ley de Pareto)")
         st.markdown("Clasificación matemática automática de tu catálogo basada en la ganancia real que aportan a la caja.")
@@ -389,13 +431,18 @@ elif st.session_state.pantalla_actual == "diagnostico":
         col_export, col_ia = st.columns(2)
         
         with col_export:
-            st.subheader("💾 Exportar Datos")
-            st.markdown("Descarga tu base de datos y un resumen ejecutivo en texto con todas las estrategias de la IA de esta sesión.")
-            st.download_button(label="📥 Descargar Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
+            st.subheader("💾 Exportar Datos y Reportes")
+            st.markdown("Descarga tu base de datos procesada o un Reporte Ejecutivo corporativo listo para imprimir en PDF.")
             
-            # ACTUALIZACIÓN FASE 3: INVOCACIÓN DEL REPORTE CON LOS NUEVOS DATOS
+            c_exp1, c_exp2 = st.columns(2)
+            with c_exp1:
+                st.download_button(label="📥 Base de Auditoría (.xlsx)", data=df_to_excel(df_final), file_name='auditoria_intelretail.xlsx', mime='application/vnd.ms-excel', use_container_width=True)
+            with c_exp2:
+                html_reporte = generar_informe_html(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia, ticket_promedio, prod_estrella, prod_dormido)
+                st.download_button(label="📄 Descargar Reporte PDF (Versión Web)", data=html_reporte, file_name='Reporte_IntelRetail.html', mime='text/html', use_container_width=True, help="Abre este archivo en tu navegador y presiona Ctrl+P para guardar como PDF perfecto.")
+            
             txt_reporte = generar_informe_texto(ventas_totales_global, ganancia_neta_global, m_simbolo, st.session_state.apuntes_ia, ticket_promedio, prod_estrella, prod_dormido)
-            st.download_button(label="📥 Descargar Informe Ejecutivo (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
+            st.download_button(label="📝 Descargar Resumen Simple (.txt)", data=txt_reporte, file_name='informe_narrativo.txt', mime='text/plain', use_container_width=True)
             
         with col_ia:
             st.subheader("🧠 Consultor IA Ejecutivo")
@@ -607,6 +654,24 @@ elif st.session_state.pantalla_actual == "simulador":
                 except Exception as e: 
                     st.error("Error contactando a la IA.")
         
+        # FASE 1 UNIVERSAL: MOTOR DE CIERRES WHATSAPP IA
+        st.markdown("---")
+        st.subheader("💬 4. Motor de Cierres (WhatsApp IA)")
+        st.markdown("Convierte objeciones difíciles en ventas reales con guiones persuasivos adaptados a cualquier industria.")
+        objecion = st.text_input("¿Qué objeción te escribió el cliente? (Ej: Está muy caro, Lo voy a consultar, No me da confianza)")
+        if st.button("⚡ Generar Guiones de Cierre", type="primary"):
+            if not ia_activa: st.error("⚠️ IA desactivada (Falta API Key).")
+            elif not objecion: st.warning("⚠️ Escribe el mensaje que te envió el cliente.")
+            else:
+                prompt_whatsapp = f"Eres un cerrador de ventas élite por WhatsApp. Un cliente me acaba de decir esta objeción: '{objecion}'. Escribe 3 respuestas diferentes, persuasivas, empáticas y cortas para rebatir esta objeción y lograr cerrar la venta de inmediato. Usa emojis sutiles y un tono conversacional."
+                try:
+                    res_wa = modelo_ia.generate_content(prompt_whatsapp, stream=True)
+                    st.markdown("#### 💬 Opciones de Respuesta Sugeridas:")
+                    texto_wa = st.write_stream(stream_gemini(res_wa))
+                    st.session_state.apuntes_ia += f"\n\n[Manejo de Objeción WhatsApp - '{objecion}']: \n{texto_wa}"
+                except Exception as e: 
+                    st.error("Error contactando a la IA.")
+
         if st.session_state.apuntes_ia != "":
             st.write("")
             with st.expander("📝 Mis Apuntes de esta Sesión (Historial)", expanded=True):
